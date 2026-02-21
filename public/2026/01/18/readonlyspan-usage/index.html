@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang=zh>
+<head>
+    <!-- so meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
+    <meta name="description" content="最后更新时间：2026-01-18 14:29:29本文通过豆包辅助生成！    在 C# 中，ReadOnlySpan&lt;T&gt; 是处理内存片段的核心类型，尤其适合高频读写、低内存开销的场景。本文将从“是什么、怎么用、为什么好用”三个维度，带你快速掌握 ReadOnlySpan&lt;T&gt; 的基础用法和核心优势。 一、ReadOnlySpan&lt;T&gt; 是什么？ReadOn">
+<meta property="og:type" content="article">
+<meta property="og:title" content="ReadOnlySpan&lt;T&gt;：轻量高效的只读内存操作">
+<meta property="og:url" content="https://as436845345.github.io/2026/01/18/readonlyspan-usage/index.html">
+<meta property="og:site_name" content="Ljhhhh的博客">
+<meta property="og:description" content="最后更新时间：2026-01-18 14:29:29本文通过豆包辅助生成！    在 C# 中，ReadOnlySpan&lt;T&gt; 是处理内存片段的核心类型，尤其适合高频读写、低内存开销的场景。本文将从“是什么、怎么用、为什么好用”三个维度，带你快速掌握 ReadOnlySpan&lt;T&gt; 的基础用法和核心优势。 一、ReadOnlySpan&lt;T&gt; 是什么？ReadOn">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2026-01-18T06:07:14.000Z">
+<meta property="article:modified_time" content="2026-01-18T06:33:57.728Z">
+<meta property="article:author" content="Ljhhhh">
+<meta property="article:tag" content="C#">
+<meta property="article:tag" content="ReadOnlySpan">
+<meta name="twitter:card" content="summary">
+    
+    
+      
+        
+          <link rel="shortcut icon" href="/images/favicon.ico">
+        
+      
+      
+        
+          <link rel="icon" type="image/png" href="/images/favicon-192x192.png" sizes="192x192">
+        
+      
+      
+        
+          <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+        
+      
+    
+    <!-- title -->
+    <title>ReadOnlySpan&lt;T&gt;：轻量高效的只读内存操作</title>
+    <!-- async scripts -->
+    <!-- Google Analytics -->
+
+
+    <!-- Umami Analytics -->
+
+
+    <!-- styles -->
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <!-- persian styles -->
+    
+    <!-- rss -->
+    
+    
+	<!-- mathjax -->
+	
+		<script type="text/x-mathjax-config">
+		  MathJax.Hub.Config({
+			tex2jax: {
+			  skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+			  inlineMath: [['$','$']]
+			},
+      CommonHTML: {
+        scale: 140
+      }
+		  });
+		</script>
+		<script src='https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML' async></script>
+	
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+<body class="max-width mx-auto px3 ltr">
+    
+      <div id="header-post">
+  <a id="menu-icon" href="#" aria-label="目录"><i class="fa-solid fa-bars fa-lg"></i></a>
+  <a id="menu-icon-tablet" href="#" aria-label="目录"><i class="fa-solid fa-bars fa-lg"></i></a>
+  <a id="top-icon-tablet" href="#" aria-label="顶部" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');" style="display:none;"><i class="fa-solid fa-chevron-up fa-lg"></i></a>
+  <span id="menu">
+    <span id="nav">
+      <ul>
+        <!--
+       --><li><a href="/">首页</a></li><!--
+     --><!--
+       --><li><a href="/about/">关于</a></li><!--
+     --><!--
+       --><li><a href="/archives/">归档</a></li><!--
+     --><!--
+       --><li><a href="/search/">搜索</a></li><!--
+     --><!--
+       --><li><a href="/tags/">标签</a></li><!--
+     --><!--
+       --><li><a href="/categories/">分类</a></li><!--
+     --><!--
+       --><li><a target="_blank" rel="noopener" href="https://github.com/as436845345/">项目</a></li><!--
+     -->
+      </ul>
+    </span>
+    <br/>
+    <span id="actions">
+      <ul>
+        
+        <li><a class="icon" aria-label="上一篇" href="/2026/01/19/span-usage/"><i class="fa-solid fa-chevron-left" aria-hidden="true" onmouseover="$('#i-prev').toggle();" onmouseout="$('#i-prev').toggle();"></i></a></li>
+        
+        
+        <li><a class="icon" aria-label="下一篇" href="/2026/01/17/arraypool-what-you-should-know/"><i class="fa-solid fa-chevron-right" aria-hidden="true" onmouseover="$('#i-next').toggle();" onmouseout="$('#i-next').toggle();"></i></a></li>
+        
+        <li><a class="icon" aria-label="返回顶部" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fa-solid fa-chevron-up" aria-hidden="true" onmouseover="$('#i-top').toggle();" onmouseout="$('#i-top').toggle();"></i></a></li>
+        <li><a class="icon" aria-label="分享文章" href="#"><i class="fa-solid fa-share-alt" aria-hidden="true" onmouseover="$('#i-share').toggle();" onmouseout="$('#i-share').toggle();" onclick="$('#share').toggle();return false;"></i></a></li>
+      </ul>
+      <span id="i-prev" class="info" style="display:none;">上一篇</span>
+      <span id="i-next" class="info" style="display:none;">下一篇</span>
+      <span id="i-top" class="info" style="display:none;">返回顶部</span>
+      <span id="i-share" class="info" style="display:none;">分享文章</span>
+    </span>
+    <br/>
+    <div id="share" style="display: none">
+      <ul>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.facebook.com/sharer.php?u=https://as436845345.github.io/2026/01/18/readonlyspan-usage/"><i class="fab fa-facebook " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=https://as436845345.github.io/2026/01/18/readonlyspan-usage/&text=ReadOnlySpan&lt;T&gt;：轻量高效的只读内存操作"><i class="fab fa-twitter " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=https://as436845345.github.io/2026/01/18/readonlyspan-usage/&title=ReadOnlySpan&lt;T&gt;：轻量高效的只读内存操作"><i class="fab fa-linkedin " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=https://as436845345.github.io/2026/01/18/readonlyspan-usage/&is_video=false&description=ReadOnlySpan&lt;T&gt;：轻量高效的只读内存操作"><i class="fab fa-pinterest " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=ReadOnlySpan&lt;T&gt;：轻量高效的只读内存操作&body=Check out this article: https://as436845345.github.io/2026/01/18/readonlyspan-usage/"><i class="fa-solid fa-envelope " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=https://as436845345.github.io/2026/01/18/readonlyspan-usage/&title=ReadOnlySpan&lt;T&gt;：轻量高效的只读内存操作"><i class="fab fa-get-pocket " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=https://as436845345.github.io/2026/01/18/readonlyspan-usage/&title=ReadOnlySpan&lt;T&gt;：轻量高效的只读内存操作"><i class="fab fa-reddit " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=https://as436845345.github.io/2026/01/18/readonlyspan-usage/&title=ReadOnlySpan&lt;T&gt;：轻量高效的只读内存操作"><i class="fab fa-stumbleupon " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=https://as436845345.github.io/2026/01/18/readonlyspan-usage/&title=ReadOnlySpan&lt;T&gt;：轻量高效的只读内存操作"><i class="fab fa-digg " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=https://as436845345.github.io/2026/01/18/readonlyspan-usage/&name=ReadOnlySpan&lt;T&gt;：轻量高效的只读内存操作&description="><i class="fab fa-tumblr " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=https://as436845345.github.io/2026/01/18/readonlyspan-usage/&t=ReadOnlySpan&lt;T&gt;：轻量高效的只读内存操作"><i class="fab fa-hacker-news " aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+    
+    
+      <div id="toc">
+        <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9C%80%E5%90%8E%E6%9B%B4%E6%96%B0%E6%97%B6%E9%97%B4%EF%BC%9A2026-01-18-14-29-29"><span class="toc-number">1.</span> <span class="toc-text">最后更新时间：2026-01-18 14:29:29</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80%E3%80%81ReadOnlySpan-%E6%98%AF%E4%BB%80%E4%B9%88%EF%BC%9F"><span class="toc-number"></span> <span class="toc-text">一、ReadOnlySpan&lt;T&gt; 是什么？</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%8C%E3%80%81%E5%A6%82%E4%BD%95%E5%B0%86%E5%B8%B8%E8%A7%81%E7%B1%BB%E5%9E%8B%E8%BD%AC%E4%B8%BA-ReadOnlySpan%EF%BC%9F"><span class="toc-number"></span> <span class="toc-text">二、如何将常见类型转为 ReadOnlySpan&lt;T&gt;？</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%89%8D%E7%BD%AE%E6%9D%A1%E4%BB%B6%EF%BC%9A%E5%AE%89%E8%A3%85%E4%BE%9D%E8%B5%96%EF%BC%88%E4%BD%8E%E7%89%88%E6%9C%AC-NET-%E9%9C%80%E5%A4%84%E7%90%86%EF%BC%89"><span class="toc-number">1.</span> <span class="toc-text">前置条件：安装依赖（低版本 .NET 需处理）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#1-%E5%AD%97%E7%AC%A6%E4%B8%B2%E8%BD%AC-ReadOnlySpan"><span class="toc-number">2.</span> <span class="toc-text">1. 字符串转 ReadOnlySpan&lt;char&gt;</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-%E6%95%B0%E7%BB%84%E8%BD%AC-ReadOnlySpan"><span class="toc-number">3.</span> <span class="toc-text">2. 数组转 ReadOnlySpan&lt;T&gt;</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-List-%E8%BD%AC-ReadOnlySpan"><span class="toc-number">4.</span> <span class="toc-text">3. List&lt;T&gt; 转 ReadOnlySpan&lt;T&gt;</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%89%E3%80%81%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E4%BD%BF%E7%94%A8-ReadOnlySpan%EF%BC%9F%E6%A0%B8%E5%BF%83%E4%BC%98%E5%8A%BF"><span class="toc-number"></span> <span class="toc-text">三、为什么要使用 ReadOnlySpan&lt;T&gt;？核心优势</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-%E6%A0%B8%E5%BF%83%E4%BC%98%E5%8A%BF%E6%80%BB%E7%BB%93"><span class="toc-number">1.</span> <span class="toc-text">1. 核心优势总结</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-%E5%AF%B9%E6%AF%94-string%EF%BC%9A%E6%95%88%E7%8E%87%E5%A4%A7%E5%B9%85%E6%8F%90%E5%8D%87"><span class="toc-number">2.</span> <span class="toc-text">2. 对比 string：效率大幅提升</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-%E5%AF%B9%E6%AF%94%E6%95%B0%E7%BB%84-%E5%88%97%E8%A1%A8%EF%BC%9A%E6%9B%B4%E8%BD%BB%E9%87%8F%E7%9A%84%E5%86%85%E5%AD%98%E6%93%8D%E4%BD%9C"><span class="toc-number">3.</span> <span class="toc-text">3. 对比数组&#x2F;列表：更轻量的内存操作</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9B%9B%E3%80%81ReadOnlySpan-%E6%A0%B8%E5%BF%83%E5%B1%9E%E6%80%A7%EF%BC%88%E6%A1%88%E4%BE%8B%EF%BC%9Astring%EF%BC%89"><span class="toc-number"></span> <span class="toc-text">四、ReadOnlySpan&lt;T&gt; 核心属性（案例：string）</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-Item-Int32-%EF%BC%9A%E8%8E%B7%E5%8F%96%E6%8C%87%E5%AE%9A%E7%B4%A2%E5%BC%95%E7%9A%84%E5%85%83%E7%B4%A0"><span class="toc-number">1.</span> <span class="toc-text">1. Item[Int32]：获取指定索引的元素</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-Length%EF%BC%9A%E8%8E%B7%E5%8F%96%E5%8F%AA%E8%AF%BB%E8%8C%83%E5%9B%B4%E7%9A%84%E5%85%83%E7%B4%A0%E6%95%B0%E9%87%8F"><span class="toc-number">2.</span> <span class="toc-text">2. Length：获取只读范围的元素数量</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%94%E3%80%81ReadOnlySpan-%E6%A0%B8%E5%BF%83%E6%96%B9%E6%B3%95%EF%BC%88%E6%A1%88%E4%BE%8B%EF%BC%9A%E6%95%B0%E7%BB%84%EF%BC%89"><span class="toc-number"></span> <span class="toc-text">五、ReadOnlySpan&lt;T&gt; 核心方法（案例：数组）</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-CopyTo-Span-%EF%BC%9A%E5%A4%8D%E5%88%B6%E5%86%85%E5%AE%B9%E5%88%B0%E7%9B%AE%E6%A0%87-Span"><span class="toc-number">1.</span> <span class="toc-text">1. CopyTo(Span&lt;T&gt;)：复制内容到目标 Span&lt;T&gt;</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-TryCopyTo-Span-%EF%BC%9A%E5%AE%89%E5%85%A8%E5%A4%8D%E5%88%B6%EF%BC%88%E8%BF%94%E5%9B%9E%E6%93%8D%E4%BD%9C%E7%BB%93%E6%9E%9C%EF%BC%89"><span class="toc-number">2.</span> <span class="toc-text">2. TryCopyTo(Span&lt;T&gt;)：安全复制（返回操作结果）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-Slice-Int32-%EF%BC%9A%E4%BB%8E%E6%8C%87%E5%AE%9A%E7%B4%A2%E5%BC%95%E5%BC%80%E5%A7%8B%E6%88%AA%E5%8F%96%E7%89%87%E6%AE%B5"><span class="toc-number">3.</span> <span class="toc-text">3. Slice(Int32)：从指定索引开始截取片段</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-Slice-Int32-Int32-%EF%BC%9A%E6%8C%87%E5%AE%9A%E7%B4%A2%E5%BC%95-%E9%95%BF%E5%BA%A6%E6%88%AA%E5%8F%96%E7%89%87%E6%AE%B5"><span class="toc-number">4.</span> <span class="toc-text">4. Slice(Int32, Int32)：指定索引+长度截取片段</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%A1%A5%E5%85%85%EF%BC%9A%E5%85%B6%E4%BB%96%E5%B8%B8%E7%94%A8%E6%96%B9%E6%B3%95"><span class="toc-number">5.</span> <span class="toc-text">补充：其他常用方法</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-number"></span> <span class="toc-text">总结</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A4%96%E9%83%A8%E9%93%BE%E6%8E%A5"><span class="toc-number"></span> <span class="toc-text">外部链接</span></a>
+      </div>
+    
+  </span>
+</div>
+
+    
+    <div class="content index py4 ">
+        
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+  <header>
+    
+    <h1 class="posttitle p-name" itemprop="name headline">
+        ReadOnlySpan&lt;T&gt;：轻量高效的只读内存操作
+    </h1>
+
+
+
+    <div class="meta">
+      <span class="author p-author h-card" itemprop="author" itemscope itemtype="http://schema.org/Person">
+        <span class="p-name" itemprop="name">Ljhhhh</span>
+      </span>
+      
+    <div class="postdate">
+      
+        <time datetime="2026-01-18T06:07:14.000Z" class="dt-published" itemprop="datePublished">2026-01-18</time>
+        
+      
+    </div>
+
+
+      
+    <div class="article-category">
+        <i class="fa-solid fa-archive"></i>
+        <a class="category-link" href="/categories/C/">C#</a>
+    </div>
+
+
+      
+    <div class="article-tag">
+        <i class="fa-solid fa-tag"></i>
+        <a class="p-category" href="/tags/C/" rel="tag">C#</a>, <a class="p-category" href="/tags/ReadOnlySpan/" rel="tag">ReadOnlySpan</a>
+    </div>
+
+
+    </div>
+  </header>
+  
+
+  <div class="content e-content" itemprop="articleBody">
+    <h3 id="最后更新时间：2026-01-18-14-29-29"><a href="#最后更新时间：2026-01-18-14-29-29" class="headerlink" title="最后更新时间：2026-01-18 14:29:29"></a><strong>最后更新时间：2026-01-18 14:29:29</strong></h3><p>本文通过豆包辅助生成！</p>
+<hr>
+<!--
+帮我写一篇 markdown 文章，是关于 C# 的 ReadOnlySpan<T> 简单介绍+简单的使用教程+案例 的内容，需要把以下所有要求罗列出来：
+
+1. 介绍 ReadOnlySpan<T> 是什么；
+2. 在 string、数组、List<T>（其他列表不知道行不行）中，通过 MemoryExtensions.AsSpan 转化为 ReadOnlySpan<T> （如果当前 .net 版本不存在 MemoryExtensions 时，通过 NuGet 安装 System.Memory 库）；
+3. 为什么使用 ReadOnlySpan<T>？有什么优势？
+  1. ReadOnlySpan<T> 的优势；
+  2. 相比直接操作 string 的方法，通过 MemoryExtensions.AsSpan 转换为 ReadOnlySpan<char> 时，那些方法的执行效率提高（高版本的 string 的方法内部实现也使用了 ReadOnlySpan，只有低版本没优化）；
+  3. 也介绍 数组、列表 等其他。
+4. ReadOnlySpan<T> 属性教程+案例（案例用 string），只介绍：
+  - Item[Int32]：从指定从零开始的索引处的只读范围获取项。
+  - Length：只读范围中的项数。
+5. ReadOnlySpan<T> 方法教程+案例（案例用 数组），只介绍：
+  - CopyTo(Span<T>)：将此 ReadOnlySpan<T> 的内容复制到目标 Span<T>。
+  - TryCopyTo(Span<T>)：尝试将此 ReadOnlySpan<T> 的内容复制到 Span<T> 中，并返回一个值以指示操作是否成功。
+  - Slice(Int32)：形成从当前只读范围开始的切片，该范围从指定的索引处开始。
+  - Slice(Int32, Int32)：形成从指定长度的指定索引处开始的当前只读范围的切片。
+  - 还有其他像 Contains、StartsWith、EndsWith、IndexOf 等，通过文档 / 网络教程查看。
+-->
+
+<p>在 C# 中，ReadOnlySpan&lt;T&gt; 是处理内存片段的核心类型，尤其适合高频读写、低内存开销的场景。本文将从“是什么、怎么用、为什么好用”三个维度，带你快速掌握 ReadOnlySpan&lt;T&gt; 的基础用法和核心优势。</p>
+<h2 id="一、ReadOnlySpan-是什么？"><a href="#一、ReadOnlySpan-是什么？" class="headerlink" title="一、ReadOnlySpan&lt;T&gt; 是什么？"></a>一、ReadOnlySpan&lt;T&gt; 是什么？</h2><p>ReadOnlySpan&lt;T&gt; 是 .NET Core 2.1+&#x2F;.NET 5+ 引入的<strong>只读内存跨度类型</strong>，本质是对一段连续内存（如字符串、数组、非托管内存）的“轻量视图”——它不分配新内存，仅记录内存的起始地址和长度，且<strong>无法修改指向的内存内容</strong>，因此兼具高性能和内存安全。</p>
+<p>核心特点：</p>
+<ul>
+<li><strong>栈分配（stack-only）</strong>：实例存储在栈上，无 GC 开销；</li>
+<li>只读特性：仅能读取内存内容，无法修改，避免意外数据篡改；</li>
+<li>零拷贝：操作内存时不复制数据，直接引用原内存区域。</li>
+</ul>
+<blockquote>
+<p>注意：ReadOnlySpan&lt;T&gt; 不能用于异步方法的返回值、类的字段等场景（栈类型限制），若需跨上下文使用，可改用 ReadOnlyMemory&lt;T&gt;。</p>
+</blockquote>
+<h2 id="二、如何将常见类型转为-ReadOnlySpan？"><a href="#二、如何将常见类型转为-ReadOnlySpan？" class="headerlink" title="二、如何将常见类型转为 ReadOnlySpan&lt;T&gt;？"></a>二、如何将常见类型转为 ReadOnlySpan&lt;T&gt;？</h2><p>ReadOnlySpan&lt;T&gt; 无法直接创建（无公共构造函数），需通过 MemoryExtensions.AsSpan 方法将字符串、数组、列表等转为 ReadOnlySpan&lt;T&gt;。</p>
+<h3 id="前置条件：安装依赖（低版本-NET-需处理）"><a href="#前置条件：安装依赖（低版本-NET-需处理）" class="headerlink" title="前置条件：安装依赖（低版本 .NET 需处理）"></a>前置条件：安装依赖（低版本 .NET 需处理）</h3><p>若你的 .NET 版本（如 .NET Framework 4.x）未内置 MemoryExtensions，需先安装 NuGet 包：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">Install-Package System.Memory</span><br><span class="line"><span class="comment"># 或 .NET CLI</span></span><br><span class="line">dotnet add package System.Memory</span><br></pre></td></tr></table></figure>
+
+<h3 id="1-字符串转-ReadOnlySpan"><a href="#1-字符串转-ReadOnlySpan" class="headerlink" title="1. 字符串转 ReadOnlySpan&lt;char&gt;"></a>1. 字符串转 ReadOnlySpan&lt;char&gt;</h3><p>字符串本质是 char 数组，转换后可直接操作字符片段，且无字符串拷贝开销：</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 原始字符串</span></span><br><span class="line"><span class="built_in">string</span> originalStr = <span class="string">&quot;Hello ReadOnlySpan!&quot;</span>;</span><br><span class="line"><span class="comment">// 转为 ReadOnlySpan&lt;char&gt;</span></span><br><span class="line">ReadOnlySpan&lt;<span class="built_in">char</span>&gt; strSpan = originalStr.AsSpan(); <span class="comment">// 等价于 MemoryExtensions.AsSpan(originalStr)</span></span><br><span class="line"></span><br><span class="line">Console.WriteLine(strSpan); <span class="comment">// 输出：Hello ReadOnlySpan!</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="2-数组转-ReadOnlySpan"><a href="#2-数组转-ReadOnlySpan" class="headerlink" title="2. 数组转 ReadOnlySpan&lt;T&gt;"></a>2. 数组转 ReadOnlySpan&lt;T&gt;</h3><p>任意数组（如 int[]、byte[]）均可直接转换，适配任意值类型&#x2F;引用类型：</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 原始 int 数组</span></span><br><span class="line"><span class="built_in">int</span>[] numArray = <span class="keyword">new</span> <span class="built_in">int</span>[] &#123; <span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span> &#125;;</span><br><span class="line"><span class="comment">// 转为 ReadOnlySpan&lt;int&gt;</span></span><br><span class="line">ReadOnlySpan&lt;<span class="built_in">int</span>&gt; arraySpan = numArray.AsSpan();</span><br><span class="line"></span><br><span class="line">Console.WriteLine(arraySpan.Length); <span class="comment">// 输出：5</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="3-List-转-ReadOnlySpan"><a href="#3-List-转-ReadOnlySpan" class="headerlink" title="3. List&lt;T&gt; 转 ReadOnlySpan&lt;T&gt;"></a>3. List&lt;T&gt; 转 ReadOnlySpan&lt;T&gt;</h3><p>若要将 List&lt;T&gt; 转为 ReadOnlySpan&lt;T&gt;，有两种方法可以实现：</p>
+<ol>
+<li>先将 List&lt;T&gt; 通过 ToArray() 转为数组（因 List 内存非绝对连续），再转 ReadOnlySpan&lt;T&gt;：</li>
+</ol>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 原始 List&lt;string&gt;</span></span><br><span class="line">List&lt;<span class="built_in">string</span>&gt; strList = <span class="keyword">new</span> List&lt;<span class="built_in">string</span>&gt; &#123; <span class="string">&quot;a&quot;</span>, <span class="string">&quot;b&quot;</span>, <span class="string">&quot;c&quot;</span> &#125;;</span><br><span class="line"><span class="comment">// List → 数组 → ReadOnlySpan&lt;T&gt;</span></span><br><span class="line">ReadOnlySpan&lt;<span class="built_in">string</span>&gt; listSpan = strList.ToArray().AsSpan();</span><br><span class="line"></span><br><span class="line">Console.WriteLine(listSpan[<span class="number">1</span>]); <span class="comment">// 输出：b</span></span><br></pre></td></tr></table></figure>
+
+<ol start="2">
+<li>通过 CollectionsMarshal.AsSpan&lt;T&gt;(List&lt;T&gt;) 转为 ReadOnlySpan&lt;T&gt;：</li>
+</ol>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 原始 List&lt;string&gt;</span></span><br><span class="line">List&lt;<span class="built_in">string</span>&gt; strList = <span class="keyword">new</span> List&lt;<span class="built_in">string</span>&gt; &#123; <span class="string">&quot;a&quot;</span>, <span class="string">&quot;b&quot;</span>, <span class="string">&quot;c&quot;</span> &#125;;</span><br><span class="line"><span class="comment">// List → 数组 → ReadOnlySpan&lt;T&gt;</span></span><br><span class="line">ReadOnlySpan&lt;<span class="built_in">string</span>&gt; listSpan = CollectionsMarshal.AsSpan(strList);</span><br><span class="line"></span><br><span class="line">Console.WriteLine(listSpan[<span class="number">1</span>]); <span class="comment">// 输出：b</span></span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>CollectionsMarshal 类需要 .NET 5+ 才能使用，或者通过 NuGet 安装包 System.Runtime.InteropServices（未测试过，不确定存不存在 CollectionsMarshal 类）。</p>
+</blockquote>
+<h2 id="三、为什么要使用-ReadOnlySpan？核心优势"><a href="#三、为什么要使用-ReadOnlySpan？核心优势" class="headerlink" title="三、为什么要使用 ReadOnlySpan&lt;T&gt;？核心优势"></a>三、为什么要使用 ReadOnlySpan&lt;T&gt;？核心优势</h2><p>相比直接操作字符串、数组，ReadOnlySpan&lt;T&gt; 最大的价值是<strong>零拷贝 + 低 GC 开销</strong>，具体优势如下：</p>
+<h3 id="1-核心优势总结"><a href="#1-核心优势总结" class="headerlink" title="1. 核心优势总结"></a>1. 核心优势总结</h3><table>
+<thead>
+<tr>
+<th>优势</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>零内存拷贝</td>
+<td>操作内存片段时（如截取子串、取数组片段），仅修改“视图范围”，不复制原数据</td>
+</tr>
+<tr>
+<td>无 GC 压力</td>
+<td>栈分配类型，实例无需 GC 回收；避免频繁创建临时字符串&#x2F;数组导致的 GC 触发</td>
+</tr>
+<tr>
+<td>内存安全</td>
+<td>只读特性防止意外修改原数据，索引越界会直接抛出异常，避免内存越访问</td>
+</tr>
+<tr>
+<td>高性能</td>
+<td>直接操作内存地址，比传统字符串&#x2F;数组方法（如 string.Substring）快数倍</td>
+</tr>
+</tbody></table>
+<h3 id="2-对比-string：效率大幅提升"><a href="#2-对比-string：效率大幅提升" class="headerlink" title="2. 对比 string：效率大幅提升"></a>2. 对比 string：效率大幅提升</h3><p>传统 string 是不可变类型，调用 Substring、Split 等方法时，会创建<strong>新字符串实例</strong>（拷贝原字符数据），高频操作时会产生大量临时对象，触发频繁 GC。</p>
+<p>而 ReadOnlySpan&lt;char&gt; 操作字符串时无拷贝：</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 传统方式：创建新字符串（拷贝数据）</span></span><br><span class="line"><span class="built_in">string</span> original = <span class="string">&quot;Hello World&quot;</span>;</span><br><span class="line"><span class="built_in">string</span> subStr = original.Substring(<span class="number">0</span>, <span class="number">5</span>); <span class="comment">// 生成新字符串 &quot;Hello&quot;，拷贝5个字符</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// ReadOnlySpan 方式：零拷贝，仅调整视图范围</span></span><br><span class="line">ReadOnlySpan&lt;<span class="built_in">char</span>&gt; span = original.AsSpan();</span><br><span class="line">ReadOnlySpan&lt;<span class="built_in">char</span>&gt; subSpan = span.Slice(<span class="number">0</span>, <span class="number">5</span>); <span class="comment">// 无拷贝，仅指向原字符串的前5个字符</span></span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>补充：高版本 .NET 的 string 内置方法（如 Substring）已底层适配 ReadOnlySpan&lt;char&gt;，但低版本 .NET 仍为拷贝实现——因此低版本中手动用 ReadOnlySpan&lt;char&gt; 优化效果更显著。</p>
+</blockquote>
+<h3 id="3-对比数组-列表：更轻量的内存操作"><a href="#3-对比数组-列表：更轻量的内存操作" class="headerlink" title="3. 对比数组&#x2F;列表：更轻量的内存操作"></a>3. 对比数组&#x2F;列表：更轻量的内存操作</h3><p>直接操作数组时，截取片段（如 Array.Copy）需拷贝数据；而 ReadOnlySpan&lt;T&gt; 仅通过 Slice 方法调整视图，无拷贝开销：</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">int</span>[] nums = &#123; <span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span> &#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 传统方式：拷贝数组片段（创建新数组）</span></span><br><span class="line"><span class="built_in">int</span>[] subNums = <span class="keyword">new</span> <span class="built_in">int</span>[<span class="number">3</span>];</span><br><span class="line">Array.Copy(nums, <span class="number">1</span>, subNums, <span class="number">0</span>, <span class="number">3</span>); <span class="comment">// 拷贝索引1-3的元素，生成新数组 [2,3,4]</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// ReadOnlySpan 方式：零拷贝，仅定义视图</span></span><br><span class="line">ReadOnlySpan&lt;<span class="built_in">int</span>&gt; subSpan = nums.AsSpan().Slice(<span class="number">1</span>, <span class="number">3</span>); <span class="comment">// 直接指向原数组的索引1-3，无拷贝</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="四、ReadOnlySpan-核心属性（案例：string）"><a href="#四、ReadOnlySpan-核心属性（案例：string）" class="headerlink" title="四、ReadOnlySpan&lt;T&gt; 核心属性（案例：string）"></a>四、ReadOnlySpan&lt;T&gt; 核心属性（案例：string）</h2><p>仅介绍高频使用的 2 个核心属性，案例基于字符串场景：</p>
+<h3 id="1-Item-Int32-：获取指定索引的元素"><a href="#1-Item-Int32-：获取指定索引的元素" class="headerlink" title="1. Item[Int32]：获取指定索引的元素"></a>1. Item[Int32]：获取指定索引的元素</h3><p>通过索引访问 ReadOnlySpan&lt;T&gt; 中的元素，语法与数组一致，<strong>只读不可改</strong>：</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">string</span> text = <span class="string">&quot;C# ReadOnlySpan Tutorial&quot;</span>;</span><br><span class="line">ReadOnlySpan&lt;<span class="built_in">char</span>&gt; textSpan = text.AsSpan();</span><br><span class="line"></span><br><span class="line"><span class="comment">// 获取索引2的字符（索引从0开始）</span></span><br><span class="line"><span class="built_in">char</span> charAt2 = textSpan[<span class="number">2</span>]; </span><br><span class="line">Console.WriteLine(charAt2); <span class="comment">// 输出：空格（&quot;C# &quot; 的第三个字符）</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 尝试修改会编译报错：ReadOnlySpan 只读</span></span><br><span class="line"><span class="comment">// textSpan[2] = &#x27;x&#x27;; // 错误：无法给只读索引器赋值</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="2-Length：获取只读范围的元素数量"><a href="#2-Length：获取只读范围的元素数量" class="headerlink" title="2. Length：获取只读范围的元素数量"></a>2. Length：获取只读范围的元素数量</h3><p>返回 ReadOnlySpan&lt;T&gt; 包含的元素总数，等价于原数据的有效长度：</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">string</span> text = <span class="string">&quot;Hello ReadOnlySpan&quot;</span>;</span><br><span class="line">ReadOnlySpan&lt;<span class="built_in">char</span>&gt; textSpan = text.AsSpan();</span><br><span class="line"></span><br><span class="line"><span class="comment">// 获取长度</span></span><br><span class="line"><span class="built_in">int</span> length = textSpan.Length;</span><br><span class="line">Console.WriteLine(length); <span class="comment">// 输出：17（&quot;Hello ReadOnlySpan&quot; 共17个字符）</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 空 Span 的 Length 为 0</span></span><br><span class="line">ReadOnlySpan&lt;<span class="built_in">char</span>&gt; emptySpan = ReadOnlySpan&lt;<span class="built_in">char</span>&gt;.Empty;</span><br><span class="line">Console.WriteLine(emptySpan.Length); <span class="comment">// 输出：0</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="五、ReadOnlySpan-核心方法（案例：数组）"><a href="#五、ReadOnlySpan-核心方法（案例：数组）" class="headerlink" title="五、ReadOnlySpan&lt;T&gt; 核心方法（案例：数组）"></a>五、ReadOnlySpan&lt;T&gt; 核心方法（案例：数组）</h2><p>以下方法均基于 int[] 数组案例，聚焦高频使用的 4 个方法：</p>
+<h3 id="1-CopyTo-Span-：复制内容到目标-Span"><a href="#1-CopyTo-Span-：复制内容到目标-Span" class="headerlink" title="1. CopyTo(Span&lt;T&gt;)：复制内容到目标 Span&lt;T&gt;"></a>1. CopyTo(Span&lt;T&gt;)：复制内容到目标 Span&lt;T&gt;</h3><p>将 ReadOnlySpan&lt;T&gt; 的内容复制到可写的 Span&lt;T&gt;（需保证目标 Span 长度足够，否则抛异常）：</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 源数组 → ReadOnlySpan&lt;int&gt;</span></span><br><span class="line"><span class="built_in">int</span>[] source = &#123; <span class="number">10</span>, <span class="number">20</span>, <span class="number">30</span>, <span class="number">40</span> &#125;;</span><br><span class="line">ReadOnlySpan&lt;<span class="built_in">int</span>&gt; sourceSpan = source.AsSpan();</span><br><span class="line"></span><br><span class="line"><span class="comment">// 目标 Span（长度需 ≥ 源 Span）</span></span><br><span class="line"><span class="built_in">int</span>[] target = <span class="keyword">new</span> <span class="built_in">int</span>[<span class="number">4</span>];</span><br><span class="line">Span&lt;<span class="built_in">int</span>&gt; targetSpan = target.AsSpan();</span><br><span class="line"></span><br><span class="line"><span class="comment">// 复制内容</span></span><br><span class="line">sourceSpan.CopyTo(targetSpan);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 输出目标数组：[10,20,30,40]</span></span><br><span class="line">Console.WriteLine(<span class="built_in">string</span>.Join(<span class="string">&quot;,&quot;</span>, target)); </span><br></pre></td></tr></table></figure>
+
+<h3 id="2-TryCopyTo-Span-：安全复制（返回操作结果）"><a href="#2-TryCopyTo-Span-：安全复制（返回操作结果）" class="headerlink" title="2. TryCopyTo(Span&lt;T&gt;)：安全复制（返回操作结果）"></a>2. TryCopyTo(Span&lt;T&gt;)：安全复制（返回操作结果）</h3><p>与 CopyTo 功能一致，但不会抛异常——若目标 Span 长度不足，返回 false，否则返回 true：</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">int</span>[] source = &#123; <span class="number">10</span>, <span class="number">20</span>, <span class="number">30</span>, <span class="number">40</span> &#125;;</span><br><span class="line">ReadOnlySpan&lt;<span class="built_in">int</span>&gt; sourceSpan = source.AsSpan();</span><br><span class="line"></span><br><span class="line"><span class="comment">// 目标 Span 长度不足（仅3个元素）</span></span><br><span class="line"><span class="built_in">int</span>[] target = <span class="keyword">new</span> <span class="built_in">int</span>[<span class="number">3</span>];</span><br><span class="line">Span&lt;<span class="built_in">int</span>&gt; targetSpan = target.AsSpan();</span><br><span class="line"></span><br><span class="line"><span class="comment">// 尝试复制</span></span><br><span class="line"><span class="built_in">bool</span> isSuccess = sourceSpan.TryCopyTo(targetSpan);</span><br><span class="line">Console.WriteLine(isSuccess); <span class="comment">// 输出：False（长度不足，复制失败）</span></span><br><span class="line">Console.WriteLine(<span class="built_in">string</span>.Join(<span class="string">&quot;,&quot;</span>, target)); <span class="comment">// 输出：0,0,0（无数据复制）</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 调整目标长度后重试</span></span><br><span class="line"><span class="built_in">int</span>[] target2 = <span class="keyword">new</span> <span class="built_in">int</span>[<span class="number">4</span>];</span><br><span class="line"><span class="built_in">bool</span> isSuccess2 = sourceSpan.TryCopyTo(target2.AsSpan());</span><br><span class="line">Console.WriteLine(isSuccess2); <span class="comment">// 输出：True</span></span><br><span class="line">Console.WriteLine(<span class="built_in">string</span>.Join(<span class="string">&quot;,&quot;</span>, target2)); <span class="comment">// 输出：10,20,30,40</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="3-Slice-Int32-：从指定索引开始截取片段"><a href="#3-Slice-Int32-：从指定索引开始截取片段" class="headerlink" title="3. Slice(Int32)：从指定索引开始截取片段"></a>3. Slice(Int32)：从指定索引开始截取片段</h3><p>截取从 startIndex 到末尾的所有元素，零拷贝仅调整视图：</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">int</span>[] nums = &#123; <span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span> &#125;;</span><br><span class="line">ReadOnlySpan&lt;<span class="built_in">int</span>&gt; numSpan = nums.AsSpan();</span><br><span class="line"></span><br><span class="line"><span class="comment">// 从索引2开始截取（包含索引2）</span></span><br><span class="line">ReadOnlySpan&lt;<span class="built_in">int</span>&gt; sliceSpan = numSpan.Slice(<span class="number">2</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 输出：3,4,5（索引2、3、4的元素）</span></span><br><span class="line">Console.WriteLine(<span class="built_in">string</span>.Join(<span class="string">&quot;,&quot;</span>, sliceSpan)); </span><br></pre></td></tr></table></figure>
+
+<h3 id="4-Slice-Int32-Int32-：指定索引-长度截取片段"><a href="#4-Slice-Int32-Int32-：指定索引-长度截取片段" class="headerlink" title="4. Slice(Int32, Int32)：指定索引+长度截取片段"></a>4. Slice(Int32, Int32)：指定索引+长度截取片段</h3><p>截取从 startIndex 开始、长度为 length 的片段，需保证 startIndex + length ≤ 原 Span 长度：</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">int</span>[] nums = &#123; <span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span> &#125;;</span><br><span class="line">ReadOnlySpan&lt;<span class="built_in">int</span>&gt; numSpan = nums.AsSpan();</span><br><span class="line"></span><br><span class="line"><span class="comment">// 从索引1开始，截取3个元素</span></span><br><span class="line">ReadOnlySpan&lt;<span class="built_in">int</span>&gt; sliceSpan = numSpan.Slice(<span class="number">1</span>, <span class="number">3</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 输出：2,3,4（索引1、2、3的元素）</span></span><br><span class="line">Console.WriteLine(<span class="built_in">string</span>.Join(<span class="string">&quot;,&quot;</span>, sliceSpan)); </span><br><span class="line"></span><br><span class="line"><span class="comment">// 索引越界会抛异常</span></span><br><span class="line"><span class="comment">// numSpan.Slice(1, 5); // 错误：长度超出范围</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="补充：其他常用方法"><a href="#补充：其他常用方法" class="headerlink" title="补充：其他常用方法"></a>补充：其他常用方法</h3><p>ReadOnlySpan&lt;T&gt; 还内置了大量实用方法，可参考官方文档&#x2F;网络教程：</p>
+<ul>
+<li>Contains(T)：判断是否包含指定元素；</li>
+<li>StartsWith(ReadOnlySpan&lt;T&gt;)：判断是否以指定片段开头；</li>
+<li>EndsWith(ReadOnlySpan&lt;T&gt;)：判断是否以指定片段结尾；</li>
+<li>IndexOf(T)：查找指定元素的第一个索引；</li>
+<li>LastIndexOf(T)：查找指定元素的最后一个索引。</li>
+</ul>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><ol>
+<li>ReadOnlySpan&lt;T&gt; 是只读的内存视图，通过 AsSpan() 从字符串&#x2F;数组&#x2F;列表转换，低版本需安装 System.Memory；</li>
+<li>核心优势是零拷贝、低 GC 开销，相比传统字符串&#x2F;数组操作效率大幅提升；</li>
+<li>核心属性：Item[Int32]（索引访问）、Length（获取长度）；</li>
+<li>核心方法：CopyTo&#x2F;TryCopyTo（复制）、Slice（截取片段），适配高性能内存操作场景。</li>
+</ol>
+<p>ReadOnlySpan&lt;T&gt; 尤其适合高频处理字符串、字节数组的场景（如网络IO、数据解析），是 C# 高性能编程的必备工具。</p>
+<h2 id="外部链接"><a href="#外部链接" class="headerlink" title="外部链接"></a>外部链接</h2><p><a target="_blank" rel="noopener" href="https://www.nuget.org/packages/System.Memory">System.Memory - NuGet Gallery</a><br><a target="_blank" rel="noopener" href="https://www.nuget.org/packages/System.Runtime.InteropServices">System.Runtime.InteropServices - NuGet Gallery</a><br><a target="_blank" rel="noopener" href="https://learn.microsoft.com/zh-cn/dotnet/api/system.memoryextensions?view=net-8.0">ReadOnlySpan&lt;T&gt; 结构 - Microsoft Learn</a><br><a target="_blank" rel="noopener" href="https://learn.microsoft.com/zh-cn/dotnet/api/system.memoryextensions?view=net-8.0">MemoryExtensions 类 - Microsoft Learn</a><br><a target="_blank" rel="noopener" href="https://learn.microsoft.com/zh-cn/dotnet/api/system.runtime.interopservices.collectionsmarshal?view=net-9.0">CollectionsMarshal 类 - Microsoft Learn</a></p>
+
+  </div>
+</article>
+
+
+    <div class="blog-post-comments">
+        <div id="utterances_thread">
+            <noscript>加载评论需要在浏览器启用 JavaScript 脚本支持。</noscript>
+        </div>
+    </div>
+
+
+        
+          <div id="footer-post-container">
+  <div id="footer-post">
+
+    <div id="nav-footer" style="display: none">
+      <ul>
+        
+          <li><a href="/">首页</a></li>
+        
+          <li><a href="/about/">关于</a></li>
+        
+          <li><a href="/archives/">归档</a></li>
+        
+          <li><a href="/search/">搜索</a></li>
+        
+          <li><a href="/tags/">标签</a></li>
+        
+          <li><a href="/categories/">分类</a></li>
+        
+          <li><a target="_blank" rel="noopener" href="https://github.com/as436845345/">项目</a></li>
+        
+      </ul>
+    </div>
+
+    
+    
+      <div id="toc-footer" style="display: none">
+        <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9C%80%E5%90%8E%E6%9B%B4%E6%96%B0%E6%97%B6%E9%97%B4%EF%BC%9A2026-01-18-14-29-29"><span class="toc-number">1.</span> <span class="toc-text">最后更新时间：2026-01-18 14:29:29</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80%E3%80%81ReadOnlySpan-%E6%98%AF%E4%BB%80%E4%B9%88%EF%BC%9F"><span class="toc-number"></span> <span class="toc-text">一、ReadOnlySpan&lt;T&gt; 是什么？</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%8C%E3%80%81%E5%A6%82%E4%BD%95%E5%B0%86%E5%B8%B8%E8%A7%81%E7%B1%BB%E5%9E%8B%E8%BD%AC%E4%B8%BA-ReadOnlySpan%EF%BC%9F"><span class="toc-number"></span> <span class="toc-text">二、如何将常见类型转为 ReadOnlySpan&lt;T&gt;？</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%89%8D%E7%BD%AE%E6%9D%A1%E4%BB%B6%EF%BC%9A%E5%AE%89%E8%A3%85%E4%BE%9D%E8%B5%96%EF%BC%88%E4%BD%8E%E7%89%88%E6%9C%AC-NET-%E9%9C%80%E5%A4%84%E7%90%86%EF%BC%89"><span class="toc-number">1.</span> <span class="toc-text">前置条件：安装依赖（低版本 .NET 需处理）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#1-%E5%AD%97%E7%AC%A6%E4%B8%B2%E8%BD%AC-ReadOnlySpan"><span class="toc-number">2.</span> <span class="toc-text">1. 字符串转 ReadOnlySpan&lt;char&gt;</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-%E6%95%B0%E7%BB%84%E8%BD%AC-ReadOnlySpan"><span class="toc-number">3.</span> <span class="toc-text">2. 数组转 ReadOnlySpan&lt;T&gt;</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-List-%E8%BD%AC-ReadOnlySpan"><span class="toc-number">4.</span> <span class="toc-text">3. List&lt;T&gt; 转 ReadOnlySpan&lt;T&gt;</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%89%E3%80%81%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E4%BD%BF%E7%94%A8-ReadOnlySpan%EF%BC%9F%E6%A0%B8%E5%BF%83%E4%BC%98%E5%8A%BF"><span class="toc-number"></span> <span class="toc-text">三、为什么要使用 ReadOnlySpan&lt;T&gt;？核心优势</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-%E6%A0%B8%E5%BF%83%E4%BC%98%E5%8A%BF%E6%80%BB%E7%BB%93"><span class="toc-number">1.</span> <span class="toc-text">1. 核心优势总结</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-%E5%AF%B9%E6%AF%94-string%EF%BC%9A%E6%95%88%E7%8E%87%E5%A4%A7%E5%B9%85%E6%8F%90%E5%8D%87"><span class="toc-number">2.</span> <span class="toc-text">2. 对比 string：效率大幅提升</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-%E5%AF%B9%E6%AF%94%E6%95%B0%E7%BB%84-%E5%88%97%E8%A1%A8%EF%BC%9A%E6%9B%B4%E8%BD%BB%E9%87%8F%E7%9A%84%E5%86%85%E5%AD%98%E6%93%8D%E4%BD%9C"><span class="toc-number">3.</span> <span class="toc-text">3. 对比数组&#x2F;列表：更轻量的内存操作</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9B%9B%E3%80%81ReadOnlySpan-%E6%A0%B8%E5%BF%83%E5%B1%9E%E6%80%A7%EF%BC%88%E6%A1%88%E4%BE%8B%EF%BC%9Astring%EF%BC%89"><span class="toc-number"></span> <span class="toc-text">四、ReadOnlySpan&lt;T&gt; 核心属性（案例：string）</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-Item-Int32-%EF%BC%9A%E8%8E%B7%E5%8F%96%E6%8C%87%E5%AE%9A%E7%B4%A2%E5%BC%95%E7%9A%84%E5%85%83%E7%B4%A0"><span class="toc-number">1.</span> <span class="toc-text">1. Item[Int32]：获取指定索引的元素</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-Length%EF%BC%9A%E8%8E%B7%E5%8F%96%E5%8F%AA%E8%AF%BB%E8%8C%83%E5%9B%B4%E7%9A%84%E5%85%83%E7%B4%A0%E6%95%B0%E9%87%8F"><span class="toc-number">2.</span> <span class="toc-text">2. Length：获取只读范围的元素数量</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%94%E3%80%81ReadOnlySpan-%E6%A0%B8%E5%BF%83%E6%96%B9%E6%B3%95%EF%BC%88%E6%A1%88%E4%BE%8B%EF%BC%9A%E6%95%B0%E7%BB%84%EF%BC%89"><span class="toc-number"></span> <span class="toc-text">五、ReadOnlySpan&lt;T&gt; 核心方法（案例：数组）</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-CopyTo-Span-%EF%BC%9A%E5%A4%8D%E5%88%B6%E5%86%85%E5%AE%B9%E5%88%B0%E7%9B%AE%E6%A0%87-Span"><span class="toc-number">1.</span> <span class="toc-text">1. CopyTo(Span&lt;T&gt;)：复制内容到目标 Span&lt;T&gt;</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-TryCopyTo-Span-%EF%BC%9A%E5%AE%89%E5%85%A8%E5%A4%8D%E5%88%B6%EF%BC%88%E8%BF%94%E5%9B%9E%E6%93%8D%E4%BD%9C%E7%BB%93%E6%9E%9C%EF%BC%89"><span class="toc-number">2.</span> <span class="toc-text">2. TryCopyTo(Span&lt;T&gt;)：安全复制（返回操作结果）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-Slice-Int32-%EF%BC%9A%E4%BB%8E%E6%8C%87%E5%AE%9A%E7%B4%A2%E5%BC%95%E5%BC%80%E5%A7%8B%E6%88%AA%E5%8F%96%E7%89%87%E6%AE%B5"><span class="toc-number">3.</span> <span class="toc-text">3. Slice(Int32)：从指定索引开始截取片段</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-Slice-Int32-Int32-%EF%BC%9A%E6%8C%87%E5%AE%9A%E7%B4%A2%E5%BC%95-%E9%95%BF%E5%BA%A6%E6%88%AA%E5%8F%96%E7%89%87%E6%AE%B5"><span class="toc-number">4.</span> <span class="toc-text">4. Slice(Int32, Int32)：指定索引+长度截取片段</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%A1%A5%E5%85%85%EF%BC%9A%E5%85%B6%E4%BB%96%E5%B8%B8%E7%94%A8%E6%96%B9%E6%B3%95"><span class="toc-number">5.</span> <span class="toc-text">补充：其他常用方法</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-number"></span> <span class="toc-text">总结</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A4%96%E9%83%A8%E9%93%BE%E6%8E%A5"><span class="toc-number"></span> <span class="toc-text">外部链接</span></a>
+      </div>
+    
+
+    <div id="share-footer" style="display: none">
+      <ul>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.facebook.com/sharer.php?u=https://as436845345.github.io/2026/01/18/readonlyspan-usage/"><i class="fab fa-facebook fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=https://as436845345.github.io/2026/01/18/readonlyspan-usage/&text=ReadOnlySpan&lt;T&gt;：轻量高效的只读内存操作"><i class="fab fa-twitter fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=https://as436845345.github.io/2026/01/18/readonlyspan-usage/&title=ReadOnlySpan&lt;T&gt;：轻量高效的只读内存操作"><i class="fab fa-linkedin fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=https://as436845345.github.io/2026/01/18/readonlyspan-usage/&is_video=false&description=ReadOnlySpan&lt;T&gt;：轻量高效的只读内存操作"><i class="fab fa-pinterest fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=ReadOnlySpan&lt;T&gt;：轻量高效的只读内存操作&body=Check out this article: https://as436845345.github.io/2026/01/18/readonlyspan-usage/"><i class="fa-solid fa-envelope fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=https://as436845345.github.io/2026/01/18/readonlyspan-usage/&title=ReadOnlySpan&lt;T&gt;：轻量高效的只读内存操作"><i class="fab fa-get-pocket fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=https://as436845345.github.io/2026/01/18/readonlyspan-usage/&title=ReadOnlySpan&lt;T&gt;：轻量高效的只读内存操作"><i class="fab fa-reddit fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=https://as436845345.github.io/2026/01/18/readonlyspan-usage/&title=ReadOnlySpan&lt;T&gt;：轻量高效的只读内存操作"><i class="fab fa-stumbleupon fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=https://as436845345.github.io/2026/01/18/readonlyspan-usage/&title=ReadOnlySpan&lt;T&gt;：轻量高效的只读内存操作"><i class="fab fa-digg fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=https://as436845345.github.io/2026/01/18/readonlyspan-usage/&name=ReadOnlySpan&lt;T&gt;：轻量高效的只读内存操作&description="><i class="fab fa-tumblr fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=https://as436845345.github.io/2026/01/18/readonlyspan-usage/&t=ReadOnlySpan&lt;T&gt;：轻量高效的只读内存操作"><i class="fab fa-hacker-news fa-lg" aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+
+    <div id="actions-footer">
+        <a id="menu" class="icon" href="#" onclick="$('#nav-footer').toggle();return false;"><i class="fa-solid fa-bars fa-lg" aria-hidden="true"></i> 菜单</a>
+        
+          <a id="toc" class="icon" href="#" onclick="$('#toc-footer').toggle();return false;"><i class="fa-solid fa-list fa-lg" aria-hidden="true"></i> 目录</a>
+        
+        <a id="share" class="icon" href="#" onclick="$('#share-footer').toggle();return false;"><i class="fa-solid fa-share-alt fa-lg" aria-hidden="true"></i> 分享</a>
+        <a id="top" style="display:none" class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fa-solid fa-chevron-up fa-lg" aria-hidden="true"></i> 返回顶部</a>
+    </div>
+
+  </div>
+</div>
+
+        
+        <footer id="footer">
+  <div class="footer-left">
+    Copyright &copy;
+    
+    
+    2016-2026
+    Ljhhhh
+  </div>
+  <div class="footer-right">
+    <nav>
+      <ul>
+        <!--
+       --><li><a href="/">首页</a></li><!--
+     --><!--
+       --><li><a href="/about/">关于</a></li><!--
+     --><!--
+       --><li><a href="/archives/">归档</a></li><!--
+     --><!--
+       --><li><a href="/search/">搜索</a></li><!--
+     --><!--
+       --><li><a href="/tags/">标签</a></li><!--
+     --><!--
+       --><li><a href="/categories/">分类</a></li><!--
+     --><!--
+       --><li><a target="_blank" rel="noopener" href="https://github.com/as436845345/">项目</a></li><!--
+     -->
+      </ul>
+    </nav>
+  </div>
+</footer>
+
+    </div>
+    <!-- styles -->
+
+
+
+  <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous" onload="this.onload=null;this.rel='stylesheet'"/>
+
+
+    <!-- jquery -->
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" crossorigin="anonymous"></script>
+
+
+
+
+<!-- clipboard -->
+
+  
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.7/clipboard.min.js" crossorigin="anonymous"></script>
+  
+  <script type="text/javascript">
+  $(function() {
+    // copy-btn HTML
+    var btn = "<span class=\"btn-copy tooltipped tooltipped-sw\" aria-label=\"复制到粘贴板！\">";
+    btn += '<i class="fa-regular fa-clone"></i>';
+    btn += '</span>';
+    // mount it!
+    $(".highlight table").before(btn);
+    var clip = new ClipboardJS('.btn-copy', {
+      text: function(trigger) {
+        return Array.from(trigger.nextElementSibling.querySelectorAll('.code')).reduce((str,it)=>str+it.innerText+'\n','')
+      }
+    });
+    clip.on('success', function(e) {
+      e.trigger.setAttribute('aria-label', "复制成功！");
+      e.clearSelection();
+    })
+  })
+  </script>
+
+
+<script src="/js/main.js"></script>
+
+<!-- search -->
+
+<!-- Baidu Analytics -->
+
+<!-- Cloudflare Analytics -->
+
+<!-- Disqus Comments -->
+
+<!-- utterances Comments -->
+
+    <script type="text/javascript">
+      var utterances_repo = 'as436845345/as436845345.github.io';
+      var utterances_issue_term = 'pathname';
+      var utterances_label = 'utterance';
+      var utterances_theme = 'github-light';
+
+      (function(){
+          var script = document.createElement('script');
+
+          script.src = 'https://utteranc.es/client.js';
+          script.setAttribute('repo', utterances_repo);
+          script.setAttribute('issue-term', 'pathname');
+          script.setAttribute('label', utterances_label);
+          script.setAttribute('theme', utterances_theme);
+          script.setAttribute('crossorigin', 'anonymous');
+          script.async = true;
+          (document.getElementById('utterances_thread')).appendChild(script);
+      }());
+  </script>
+
+</body>
+</html>

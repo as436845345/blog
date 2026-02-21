@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang=zh>
+<head>
+    <!-- so meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
+    <meta name="description" content="最后更新时间：2026-02-20 21:08:05本文通过豆包辅助生成！  本文将详细解析如何通过向量运算在 SkiaSharp 中为线段绘制箭头，并系统讲解过程中涉及的向量数学原理与实现逻辑。 一、核心需求概述你希望通过向量运算，在 SkiaSharp 的绘制场景中，为任意线段的端点（示例中为 startPos 到 endPos 的线段终点）绘制标准的箭头样式，核心是利用向量的减法、归一化、法">
+<meta property="og:type" content="article">
+<meta property="og:title" content="基于向量的线段箭头绘制详解">
+<meta property="og:url" content="https://as436845345.github.io/2026/02/20/vector-based-arrow-rendering-for-line-segments-md/index.html">
+<meta property="og:site_name" content="Ljhhhh的博客">
+<meta property="og:description" content="最后更新时间：2026-02-20 21:08:05本文通过豆包辅助生成！  本文将详细解析如何通过向量运算在 SkiaSharp 中为线段绘制箭头，并系统讲解过程中涉及的向量数学原理与实现逻辑。 一、核心需求概述你希望通过向量运算，在 SkiaSharp 的绘制场景中，为任意线段的端点（示例中为 startPos 到 endPos 的线段终点）绘制标准的箭头样式，核心是利用向量的减法、归一化、法">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2026-02-20T12:14:45.000Z">
+<meta property="article:modified_time" content="2026-02-20T13:08:52.016Z">
+<meta property="article:author" content="Ljhhhh">
+<meta property="article:tag" content="C#">
+<meta property="article:tag" content="SkiaSharp">
+<meta property="article:tag" content="Vector">
+<meta name="twitter:card" content="summary">
+    
+    
+      
+        
+          <link rel="shortcut icon" href="/images/favicon.ico">
+        
+      
+      
+        
+          <link rel="icon" type="image/png" href="/images/favicon-192x192.png" sizes="192x192">
+        
+      
+      
+        
+          <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+        
+      
+    
+    <!-- title -->
+    <title>基于向量的线段箭头绘制详解</title>
+    <!-- async scripts -->
+    <!-- Google Analytics -->
+
+
+    <!-- Umami Analytics -->
+
+
+    <!-- styles -->
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <!-- persian styles -->
+    
+    <!-- rss -->
+    
+    
+	<!-- mathjax -->
+	
+		<script type="text/x-mathjax-config">
+		  MathJax.Hub.Config({
+			tex2jax: {
+			  skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+			  inlineMath: [['$','$']]
+			},
+      CommonHTML: {
+        scale: 140
+      }
+		  });
+		</script>
+		<script src='https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML' async></script>
+	
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+<body class="max-width mx-auto px3 ltr">
+    
+      <div id="header-post">
+  <a id="menu-icon" href="#" aria-label="目录"><i class="fa-solid fa-bars fa-lg"></i></a>
+  <a id="menu-icon-tablet" href="#" aria-label="目录"><i class="fa-solid fa-bars fa-lg"></i></a>
+  <a id="top-icon-tablet" href="#" aria-label="顶部" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');" style="display:none;"><i class="fa-solid fa-chevron-up fa-lg"></i></a>
+  <span id="menu">
+    <span id="nav">
+      <ul>
+        <!--
+       --><li><a href="/">首页</a></li><!--
+     --><!--
+       --><li><a href="/about/">关于</a></li><!--
+     --><!--
+       --><li><a href="/archives/">归档</a></li><!--
+     --><!--
+       --><li><a href="/search/">搜索</a></li><!--
+     --><!--
+       --><li><a href="/tags/">标签</a></li><!--
+     --><!--
+       --><li><a href="/categories/">分类</a></li><!--
+     --><!--
+       --><li><a target="_blank" rel="noopener" href="https://github.com/as436845345/">项目</a></li><!--
+     -->
+      </ul>
+    </span>
+    <br/>
+    <span id="actions">
+      <ul>
+        
+        
+        <li><a class="icon" aria-label="下一篇" href="/2026/01/24/perfer-stackalloc-usage/"><i class="fa-solid fa-chevron-right" aria-hidden="true" onmouseover="$('#i-next').toggle();" onmouseout="$('#i-next').toggle();"></i></a></li>
+        
+        <li><a class="icon" aria-label="返回顶部" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fa-solid fa-chevron-up" aria-hidden="true" onmouseover="$('#i-top').toggle();" onmouseout="$('#i-top').toggle();"></i></a></li>
+        <li><a class="icon" aria-label="分享文章" href="#"><i class="fa-solid fa-share-alt" aria-hidden="true" onmouseover="$('#i-share').toggle();" onmouseout="$('#i-share').toggle();" onclick="$('#share').toggle();return false;"></i></a></li>
+      </ul>
+      <span id="i-prev" class="info" style="display:none;">上一篇</span>
+      <span id="i-next" class="info" style="display:none;">下一篇</span>
+      <span id="i-top" class="info" style="display:none;">返回顶部</span>
+      <span id="i-share" class="info" style="display:none;">分享文章</span>
+    </span>
+    <br/>
+    <div id="share" style="display: none">
+      <ul>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.facebook.com/sharer.php?u=https://as436845345.github.io/2026/02/20/vector-based-arrow-rendering-for-line-segments-md/"><i class="fab fa-facebook " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=https://as436845345.github.io/2026/02/20/vector-based-arrow-rendering-for-line-segments-md/&text=基于向量的线段箭头绘制详解"><i class="fab fa-twitter " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=https://as436845345.github.io/2026/02/20/vector-based-arrow-rendering-for-line-segments-md/&title=基于向量的线段箭头绘制详解"><i class="fab fa-linkedin " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=https://as436845345.github.io/2026/02/20/vector-based-arrow-rendering-for-line-segments-md/&is_video=false&description=基于向量的线段箭头绘制详解"><i class="fab fa-pinterest " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=基于向量的线段箭头绘制详解&body=Check out this article: https://as436845345.github.io/2026/02/20/vector-based-arrow-rendering-for-line-segments-md/"><i class="fa-solid fa-envelope " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=https://as436845345.github.io/2026/02/20/vector-based-arrow-rendering-for-line-segments-md/&title=基于向量的线段箭头绘制详解"><i class="fab fa-get-pocket " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=https://as436845345.github.io/2026/02/20/vector-based-arrow-rendering-for-line-segments-md/&title=基于向量的线段箭头绘制详解"><i class="fab fa-reddit " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=https://as436845345.github.io/2026/02/20/vector-based-arrow-rendering-for-line-segments-md/&title=基于向量的线段箭头绘制详解"><i class="fab fa-stumbleupon " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=https://as436845345.github.io/2026/02/20/vector-based-arrow-rendering-for-line-segments-md/&title=基于向量的线段箭头绘制详解"><i class="fab fa-digg " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=https://as436845345.github.io/2026/02/20/vector-based-arrow-rendering-for-line-segments-md/&name=基于向量的线段箭头绘制详解&description="><i class="fab fa-tumblr " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=https://as436845345.github.io/2026/02/20/vector-based-arrow-rendering-for-line-segments-md/&t=基于向量的线段箭头绘制详解"><i class="fab fa-hacker-news " aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+    
+    
+      <div id="toc">
+        <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9C%80%E5%90%8E%E6%9B%B4%E6%96%B0%E6%97%B6%E9%97%B4%EF%BC%9A2026-02-20-21-08-05"><span class="toc-number">1.</span> <span class="toc-text">最后更新时间：2026-02-20 21:08:05</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80%E3%80%81%E6%A0%B8%E5%BF%83%E9%9C%80%E6%B1%82%E6%A6%82%E8%BF%B0"><span class="toc-number"></span> <span class="toc-text">一、核心需求概述</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%8C%E3%80%81%E5%90%91%E9%87%8F%E5%9F%BA%E7%A1%80%E5%AE%9A%E4%B9%89"><span class="toc-number"></span> <span class="toc-text">二、向量基础定义</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-%E4%BA%8C%E7%BB%B4%E5%90%91%E9%87%8F%E7%BB%93%E6%9E%84%E4%BD%93%EF%BC%88PEVector%EF%BC%89"><span class="toc-number">1.</span> <span class="toc-text">1. 二维向量结构体（PEVector）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-%E5%90%91%E9%87%8F%E5%85%B3%E9%94%AE%E6%A6%82%E5%BF%B5%E8%A1%A5%E5%85%85"><span class="toc-number">2.</span> <span class="toc-text">2. 向量关键概念补充</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%89%E3%80%81%E7%AE%AD%E5%A4%B4%E7%BB%98%E5%88%B6%E5%AE%8C%E6%95%B4%E6%B5%81%E7%A8%8B%EF%BC%88%E9%99%84%E6%95%B0%E5%AD%A6%E5%85%AC%E5%BC%8F%EF%BC%89"><span class="toc-number"></span> <span class="toc-text">三、箭头绘制完整流程（附数学公式）</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%AD%A5%E9%AA%A41%EF%BC%9A%E5%AE%9A%E4%B9%89%E5%9F%BA%E7%A1%80%E5%8F%82%E6%95%B0%E4%B8%8E%E7%BA%BF%E6%AE%B5%E8%B5%B7%E7%82%B9-%E7%BB%88%E7%82%B9"><span class="toc-number">1.</span> <span class="toc-text">步骤1：定义基础参数与线段起点&#x2F;终点</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%AD%A5%E9%AA%A42%EF%BC%9A%E8%AE%A1%E7%AE%97%E7%BA%BF%E6%AE%B5%E7%9A%84%E6%96%B9%E5%90%91%E5%90%91%E9%87%8F"><span class="toc-number">2.</span> <span class="toc-text">步骤2：计算线段的方向向量</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%AD%A5%E9%AA%A43%EF%BC%9A%E5%B0%86%E6%96%B9%E5%90%91%E5%90%91%E9%87%8F%E5%BD%92%E4%B8%80%E5%8C%96%EF%BC%88%E8%BD%AC%E4%B8%BA%E5%8D%95%E4%BD%8D%E5%90%91%E9%87%8F%EF%BC%89"><span class="toc-number">3.</span> <span class="toc-text">步骤3：将方向向量归一化（转为单位向量）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%AD%A5%E9%AA%A44%EF%BC%9A%E8%AE%A1%E7%AE%97%E7%AE%AD%E5%A4%B4%E4%B8%AD%E5%BF%83%E7%82%B9%EF%BC%88%E7%AE%AD%E5%A4%B4%E6%96%9C%E8%BE%B9%E7%9A%84%E4%BA%A4%E6%B1%87%E8%B5%B7%E7%82%B9%EF%BC%89"><span class="toc-number">4.</span> <span class="toc-text">步骤4：计算箭头中心点（箭头斜边的交汇起点）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%AD%A5%E9%AA%A45%EF%BC%9A%E8%AE%A1%E7%AE%97%E5%B7%A6%E4%BE%A7%E6%96%9C%E8%BE%B9%E7%9A%84%E7%AB%AF%E7%82%B9"><span class="toc-number">5.</span> <span class="toc-text">步骤5：计算左侧斜边的端点</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%AD%A5%E9%AA%A46%EF%BC%9A%E8%AE%A1%E7%AE%97%E5%8F%B3%E4%BE%A7%E6%96%9C%E8%BE%B9%E7%9A%84%E7%AB%AF%E7%82%B9"><span class="toc-number">6.</span> <span class="toc-text">步骤6：计算右侧斜边的端点</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%AD%A5%E9%AA%A47%EF%BC%88%E5%8F%AF%E9%80%89%EF%BC%89%EF%BC%9A%E7%BB%98%E5%88%B6%E8%BE%85%E5%8A%A9%E5%AE%9A%E4%BD%8D%E5%9C%86"><span class="toc-number">7.</span> <span class="toc-text">步骤7（可选）：绘制辅助定位圆</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9B%9B%E3%80%81%E5%AE%8C%E6%95%B4%E4%BB%A3%E7%A0%81%E6%95%B4%E5%90%88"><span class="toc-number"></span> <span class="toc-text">四、完整代码整合</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-number">1.</span> <span class="toc-text">总结</span></a></li></ol>
+      </div>
+    
+  </span>
+</div>
+
+    
+    <div class="content index py4 ">
+        
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+  <header>
+    
+    <h1 class="posttitle p-name" itemprop="name headline">
+        基于向量的线段箭头绘制详解
+    </h1>
+
+
+
+    <div class="meta">
+      <span class="author p-author h-card" itemprop="author" itemscope itemtype="http://schema.org/Person">
+        <span class="p-name" itemprop="name">Ljhhhh</span>
+      </span>
+      
+    <div class="postdate">
+      
+        <time datetime="2026-02-20T12:14:45.000Z" class="dt-published" itemprop="datePublished">2026-02-20</time>
+        
+      
+    </div>
+
+
+      
+    <div class="article-category">
+        <i class="fa-solid fa-archive"></i>
+        <a class="category-link" href="/categories/C/">C#</a> › <a class="category-link" href="/categories/C/Vector/">Vector</a>
+    </div>
+
+
+      
+    <div class="article-tag">
+        <i class="fa-solid fa-tag"></i>
+        <a class="p-category" href="/tags/C/" rel="tag">C#</a>, <a class="p-category" href="/tags/SkiaSharp/" rel="tag">SkiaSharp</a>, <a class="p-category" href="/tags/Vector/" rel="tag">Vector</a>
+    </div>
+
+
+    </div>
+  </header>
+  
+
+  <div class="content e-content" itemprop="articleBody">
+    <h3 id="最后更新时间：2026-02-20-21-08-05"><a href="#最后更新时间：2026-02-20-21-08-05" class="headerlink" title="最后更新时间：2026-02-20 21:08:05"></a><strong>最后更新时间：2026-02-20 21:08:05</strong></h3><p>本文通过豆包辅助生成！</p>
+<hr>
+<p>本文将详细解析如何通过向量运算在 SkiaSharp 中为线段绘制箭头，并系统讲解过程中涉及的向量数学原理与实现逻辑。</p>
+<h2 id="一、核心需求概述"><a href="#一、核心需求概述" class="headerlink" title="一、核心需求概述"></a>一、核心需求概述</h2><p>你希望通过向量运算，在 SkiaSharp 的绘制场景中，为任意线段的端点（示例中为 startPos 到 endPos 的线段终点）绘制标准的箭头样式，核心是利用向量的减法、归一化、法向量、缩放、加法等运算实现箭头两个斜边的精准定位。</p>
+<h2 id="二、向量基础定义"><a href="#二、向量基础定义" class="headerlink" title="二、向量基础定义"></a>二、向量基础定义</h2><h3 id="1-二维向量结构体（PEVector）"><a href="#1-二维向量结构体（PEVector）" class="headerlink" title="1. 二维向量结构体（PEVector）"></a>1. 二维向量结构体（PEVector）</h3><p>示例中定义了 PEVector 结构体来封装二维向量的属性与核心运算，核心属性和方法如下：</p>
+<table>
+<thead>
+<tr>
+<th>成员</th>
+<th>说明</th>
+<th>数学表达</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>X&#x2F;Y</td>
+<td>向量的x、y分量</td>
+<td>向量 $\vec{v} &#x3D; (X, Y)$</td>
+</tr>
+<tr>
+<td>Length</td>
+<td>向量的模（长度）</td>
+<td>$|\vec{v}| &#x3D; \sqrt{X^2 + Y^2}$</td>
+</tr>
+<tr>
+<td>Normalize()</td>
+<td>向量归一化（转为单位向量）</td>
+<td>$\hat{v} &#x3D; \frac{\vec{v}}{|\vec{v}|}$</td>
+</tr>
+<tr>
+<td>GetNormal()</td>
+<td>获取向量的法向量</td>
+<td>若 $\vec{v}&#x3D;(x,y)$，则法向量为 $(y, -x)$</td>
+</tr>
+<tr>
+<td>Add(v1, v2)</td>
+<td>向量加法</td>
+<td>$\vec{v_1} + \vec{v_2} &#x3D; (x_1+x_2, y_1+y_2)$</td>
+</tr>
+<tr>
+<td>Sub(v1, v2)</td>
+<td>向量减法</td>
+<td>$\vec{v_1} - \vec{v_2} &#x3D; (x_1-x_2, y_1-y_2)$</td>
+</tr>
+<tr>
+<td>Scale(v, s)</td>
+<td>向量缩放</td>
+<td>$s \cdot \vec{v} &#x3D; (s \cdot x, s \cdot y)$</td>
+</tr>
+</tbody></table>
+<h3 id="2-向量关键概念补充"><a href="#2-向量关键概念补充" class="headerlink" title="2. 向量关键概念补充"></a>2. 向量关键概念补充</h3><ul>
+<li><strong>单位向量</strong>：模为 1 的向量，仅表示方向，无长度属性，公式：$\hat{v} &#x3D; \frac{\vec{v}}{|\vec{v}|}$（要求 $|\vec{v}| \neq 0$）。</li>
+<li><strong>法向量</strong>：与原向量垂直的向量，二维向量 $(x,y)$ 有两个正交法向量：$(y, -x)$ 和 $(-y, x)$（两者方向相反）。</li>
+<li><strong>向量减法几何意义</strong>：$\vec{v_1} - \vec{v_2}$ 表示从 $v_2$ 指向 $v_1$ 的向量。</li>
+</ul>
+<h2 id="三、箭头绘制完整流程（附数学公式）"><a href="#三、箭头绘制完整流程（附数学公式）" class="headerlink" title="三、箭头绘制完整流程（附数学公式）"></a>三、箭头绘制完整流程（附数学公式）</h2><p>以下按代码执行顺序，拆解箭头绘制的每一步逻辑与对应的数学运算：</p>
+<h3 id="步骤1：定义基础参数与线段起点-终点"><a href="#步骤1：定义基础参数与线段起点-终点" class="headerlink" title="步骤1：定义基础参数与线段起点&#x2F;终点"></a>步骤1：定义基础参数与线段起点&#x2F;终点</h3><figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> <span class="built_in">int</span> Gap = <span class="number">10</span>; <span class="comment">// 箭头斜边的长度（像素）</span></span><br><span class="line"><span class="keyword">var</span> startPos = <span class="keyword">new</span> PEVector(<span class="number">200</span>, <span class="number">600</span>); <span class="comment">// 线段起点 S(200,600)</span></span><br><span class="line"><span class="keyword">var</span> endPos = <span class="keyword">new</span> PEVector(<span class="number">600</span>, <span class="number">200</span>);   <span class="comment">// 线段终点 E(600,200)</span></span><br><span class="line">canvas.DrawLine(startPos.ToSKPoint(), endPos.ToSKPoint(), linePaint); <span class="comment">// 绘制基础线段</span></span><br></pre></td></tr></table></figure>
+
+<p>基础线段为：从点 $S(x_s, y_s)$ 到点 $E(x_e, y_e)$ 的直线段。</p>
+<h3 id="步骤2：计算线段的方向向量"><a href="#步骤2：计算线段的方向向量" class="headerlink" title="步骤2：计算线段的方向向量"></a>步骤2：计算线段的方向向量</h3><figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> direction = PEVector.Sub(endPos, startPos); <span class="comment">// 从起点指向终点的方向向量</span></span><br></pre></td></tr></table></figure>
+
+<p>数学公式：<br>$$\vec{direction} &#x3D; E - S &#x3D; (x_e - x_s, y_e - y_s)$$<br>几何意义：该向量完全表示线段SE的方向和长度。</p>
+<h3 id="步骤3：将方向向量归一化（转为单位向量）"><a href="#步骤3：将方向向量归一化（转为单位向量）" class="headerlink" title="步骤3：将方向向量归一化（转为单位向量）"></a>步骤3：将方向向量归一化（转为单位向量）</h3><figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">direction.Normalize(); <span class="comment">// 归一化得到单位方向向量</span></span><br></pre></td></tr></table></figure>
+
+<p>数学公式：<br>$$\hat{direction} &#x3D; \frac{\vec{direction}}{|\vec{direction}|} &#x3D; \frac{(x_e - x_s, y_e - y_s)}{\sqrt{(x_e - x_s)^2 + (y_e - y_s)^2}}$$<br>作用：消除长度影响，仅保留方向信息，方便后续按固定长度（Gap）偏移。</p>
+<h3 id="步骤4：计算箭头中心点（箭头斜边的交汇起点）"><a href="#步骤4：计算箭头中心点（箭头斜边的交汇起点）" class="headerlink" title="步骤4：计算箭头中心点（箭头斜边的交汇起点）"></a>步骤4：计算箭头中心点（箭头斜边的交汇起点）</h3><figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> endHeadCenter = PEVector.Sub(endPos, PEVector.Scale(direction, Gap));</span><br></pre></td></tr></table></figure>
+
+<p>数学公式：<br>$$P_{center} &#x3D; E - Gap \cdot \hat{direction}$$<br>几何意义：从线段终点 E，沿着线段反方向（-$\hat{direction}$）移动 Gap 像素，得到箭头的中心点 $P_{center}$，箭头的两个斜边将从该点向E的左右两侧延伸。</p>
+<h3 id="步骤5：计算左侧斜边的端点"><a href="#步骤5：计算左侧斜边的端点" class="headerlink" title="步骤5：计算左侧斜边的端点"></a>步骤5：计算左侧斜边的端点</h3><figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 获取方向向量的法向量（左方向）</span></span><br><span class="line"><span class="keyword">var</span> directionToLeft = direction.GetNormal(); </span><br><span class="line"><span class="comment">// 计算左侧端点：中心点 + 左法向量×Gap</span></span><br><span class="line"><span class="keyword">var</span> leftEndHeadPos = PEVector.Add(endHeadCenter, PEVector.Scale(directionToLeft, Gap));</span><br><span class="line"><span class="comment">// 绘制左侧斜边（从左端点到终点E）</span></span><br><span class="line">canvas.DrawLine(leftEndHeadPos.ToSKPoint(), endPos.ToSKPoint(), linePaint);</span><br></pre></td></tr></table></figure>
+
+<p>数学公式：<br>$$\vec{n_{left}} &#x3D; (y_{\hat{direction}}, -x_{\hat{direction}}) \quad \text{（左法向量）}$$<br>$$P_{left} &#x3D; P_{center} + Gap \cdot \vec{n_{left}}$$<br>几何意义：左法向量与原方向向量垂直，沿该方向偏移 Gap 像素，得到箭头左侧斜边的端点 $P_{left}$，连接 $P_{left}$ 和 E 即箭头左斜边。</p>
+<h3 id="步骤6：计算右侧斜边的端点"><a href="#步骤6：计算右侧斜边的端点" class="headerlink" title="步骤6：计算右侧斜边的端点"></a>步骤6：计算右侧斜边的端点</h3><figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 获取方向向量的右法向量（左法向量取反）</span></span><br><span class="line"><span class="keyword">var</span> directionToRight = PEVector.Scale(direction.GetNormal(), <span class="number">-1</span>);</span><br><span class="line"><span class="comment">// 计算右侧端点：中心点 + 右法向量×Gap</span></span><br><span class="line"><span class="keyword">var</span> rightEndHeadPos = PEVector.Add(endHeadCenter, PEVector.Scale(directionToRight, Gap));</span><br><span class="line"><span class="comment">// 绘制右侧斜边（从右端点到终点E）</span></span><br><span class="line">canvas.DrawLine(rightEndHeadPos.ToSKPoint(), endPos.ToSKPoint(), linePaint);</span><br></pre></td></tr></table></figure>
+
+<p>数学公式：<br>$$\vec{n_{right}} &#x3D; -\vec{n_{left}} &#x3D; (-y_{\hat{direction}}, x_{\hat{direction}}) \quad \text{（右法向量）}$$<br>$$P_{right} &#x3D; P_{center} + Gap \cdot \vec{n_{right}}$$<br>几何意义：右法向量与左法向量方向相反，沿该方向偏移 Gap 像素，得到箭头右侧斜边的端点 $P_{right}$，连接 $P_{right}$ 和 E 即箭头右斜边。</p>
+<h3 id="步骤7（可选）：绘制辅助定位圆"><a href="#步骤7（可选）：绘制辅助定位圆" class="headerlink" title="步骤7（可选）：绘制辅助定位圆"></a>步骤7（可选）：绘制辅助定位圆</h3><p>通过绘制红&#x2F;绿色小圆标记关键点位（$P_{center}$、$P_{left}$、$P_{right}$），便于调试箭头位置：</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (ShowCircle)</span><br><span class="line">&#123;</span><br><span class="line">    canvas.DrawCircle(endHeadCenter.ToSKPoint(), <span class="number">3</span>, <span class="keyword">new</span> SKPaint &#123; Color = SKColors.Red &#125;); <span class="comment">// 中心点（红）</span></span><br><span class="line">    canvas.DrawCircle(leftEndHeadPos.ToSKPoint(), <span class="number">3</span>, <span class="keyword">new</span> SKPaint &#123; Color = SKColors.Green &#125;); <span class="comment">// 左端点（绿）</span></span><br><span class="line">    canvas.DrawCircle(rightEndHeadPos.ToSKPoint(), <span class="number">3</span>, <span class="keyword">new</span> SKPaint &#123; Color = SKColors.Green &#125;); <span class="comment">// 右端点（绿）</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="四、完整代码整合"><a href="#四、完整代码整合" class="headerlink" title="四、完整代码整合"></a>四、完整代码整合</h2><figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">using</span> SkiaSharp;</span><br><span class="line"><span class="keyword">using</span> SkiaSharp.Views.Desktop;</span><br><span class="line"><span class="keyword">using</span> System;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">struct</span> PEVector</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="built_in">double</span> X;</span><br><span class="line">    <span class="keyword">public</span> <span class="built_in">double</span> Y;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">PEVector</span>()</span> &#123; &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">PEVector</span>(<span class="params"><span class="built_in">double</span> x, <span class="built_in">double</span> y</span>)</span></span><br><span class="line">    &#123;</span><br><span class="line">        X = x;</span><br><span class="line">        Y = y;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 向量的模（长度）</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">readonly</span> <span class="built_in">double</span> Length =&gt; Math.Sqrt(X * X + Y * Y);</span><br><span class="line"></span><br><span class="line">    <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;summary&gt;</span></span></span><br><span class="line">    <span class="comment"><span class="doctag">///</span> 归一化：将向量转为单位向量（模≈1）</span></span><br><span class="line">    <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;/summary&gt;</span></span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">Normalize</span>()</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">var</span> length = Length;</span><br><span class="line">        <span class="keyword">if</span> (length &lt; <span class="number">1e-9</span>) <span class="keyword">return</span>; <span class="comment">// 避免除以0</span></span><br><span class="line">        X /= length;</span><br><span class="line">        Y /= length;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;summary&gt;</span></span></span><br><span class="line">    <span class="comment"><span class="doctag">///</span> 获取向量的法向量（垂直向量）：(x,y) → (y, -x)</span></span><br><span class="line">    <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;/summary&gt;</span></span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> PEVector <span class="title">GetNormal</span>()</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> PEVector &#123; X = Y, Y = -X &#125;;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;summary&gt;</span></span></span><br><span class="line">    <span class="comment"><span class="doctag">///</span> 向量加法</span></span><br><span class="line">    <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;/summary&gt;</span></span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> PEVector <span class="title">Add</span>(<span class="params">PEVector v1, PEVector v2</span>)</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> PEVector &#123; X = v1.X + v2.X, Y = v1.Y + v2.Y &#125;;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;summary&gt;</span></span></span><br><span class="line">    <span class="comment"><span class="doctag">///</span> 向量减法</span></span><br><span class="line">    <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;/summary&gt;</span></span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> PEVector <span class="title">Sub</span>(<span class="params">PEVector v1, PEVector v2</span>)</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> PEVector &#123; X = v1.X - v2.X, Y = v1.Y - v2.Y &#125;;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;summary&gt;</span></span></span><br><span class="line">    <span class="comment"><span class="doctag">///</span> 向量缩放</span></span><br><span class="line">    <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;/summary&gt;</span></span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> PEVector <span class="title">Scale</span>(<span class="params">PEVector v, <span class="built_in">double</span> scale</span>)</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> PEVector &#123; X = v.X * scale, Y = v.Y * scale &#125;;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">class</span> <span class="title">PEVectorExtensions</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;summary&gt;</span></span></span><br><span class="line">    <span class="comment"><span class="doctag">///</span> 向量转为SkiaSharp的点</span></span><br><span class="line">    <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;/summary&gt;</span></span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> SKPoint <span class="title">ToSKPoint</span>(<span class="params"><span class="keyword">this</span> PEVector v</span>)</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> SKPoint((<span class="built_in">float</span>)v.X, (<span class="built_in">float</span>)v.Y);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title">ArrowDrawing</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">SKElement_PaintSurface</span>(<span class="params"><span class="built_in">object</span> sender, SKPaintSurfaceEventArgs e</span>)</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">const</span> <span class="built_in">int</span> Gap = <span class="number">10</span>; <span class="comment">// 箭头尺寸（像素）</span></span><br><span class="line">        <span class="built_in">bool</span> ShowCircle = <span class="literal">false</span>; <span class="comment">// 是否显示辅助定位圆</span></span><br><span class="line"></span><br><span class="line">        <span class="keyword">var</span> canvas = e.Surface.Canvas;</span><br><span class="line">        canvas.Clear();</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 初始化画笔</span></span><br><span class="line">        <span class="keyword">using</span> <span class="keyword">var</span> linePaint = <span class="keyword">new</span> SKPaint &#123; Color = SKColors.Black, StrokeWidth = <span class="number">1</span> &#125;;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 1. 定义线段起点和终点</span></span><br><span class="line">        <span class="keyword">var</span> startPos = <span class="keyword">new</span> PEVector(<span class="number">200</span>, <span class="number">600</span>);</span><br><span class="line">        <span class="keyword">var</span> endPos = <span class="keyword">new</span> PEVector(<span class="number">600</span>, <span class="number">200</span>);</span><br><span class="line">        <span class="comment">// 绘制基础线段</span></span><br><span class="line">        canvas.DrawLine(startPos.ToSKPoint(), endPos.ToSKPoint(), linePaint);</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 2. 计算从起点到终点的方向向量</span></span><br><span class="line">        <span class="keyword">var</span> direction = PEVector.Sub(endPos, startPos);</span><br><span class="line">        <span class="comment">// 3. 归一化方向向量（转为单位向量）</span></span><br><span class="line">        direction.Normalize();</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 4. 计算箭头中心点（从终点反方向偏移Gap）</span></span><br><span class="line">        <span class="keyword">var</span> endHeadCenter = PEVector.Sub(endPos, PEVector.Scale(direction, Gap));</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 5. 计算箭头左侧斜边端点并绘制</span></span><br><span class="line">        <span class="keyword">var</span> directionToLeft = direction.GetNormal(); <span class="comment">// 左法向量</span></span><br><span class="line">        <span class="keyword">var</span> leftEndHeadPos = PEVector.Add(endHeadCenter, PEVector.Scale(directionToLeft, Gap));</span><br><span class="line">        canvas.DrawLine(leftEndHeadPos.ToSKPoint(), endPos.ToSKPoint(), linePaint);</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 6. 计算箭头右侧斜边端点并绘制</span></span><br><span class="line">        <span class="keyword">var</span> directionToRight = PEVector.Scale(direction.GetNormal(), <span class="number">-1</span>); <span class="comment">// 右法向量</span></span><br><span class="line">        <span class="keyword">var</span> rightEndHeadPos = PEVector.Add(endHeadCenter, PEVector.Scale(directionToRight, Gap));</span><br><span class="line">        canvas.DrawLine(rightEndHeadPos.ToSKPoint(), endPos.ToSKPoint(), linePaint);</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 可选：绘制辅助定位圆</span></span><br><span class="line">        <span class="keyword">if</span> (ShowCircle)</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="keyword">using</span> <span class="keyword">var</span> redPaint = <span class="keyword">new</span> SKPaint &#123; Color = SKColors.Red, StrokeWidth = <span class="number">1</span>, Style = SKPaintStyle.Fill &#125;;</span><br><span class="line">            <span class="keyword">using</span> <span class="keyword">var</span> greenPaint = <span class="keyword">new</span> SKPaint &#123; Color = SKColors.Green, StrokeWidth = <span class="number">1</span>, Style = SKPaintStyle.Fill &#125;;</span><br><span class="line">            canvas.DrawCircle(endHeadCenter.ToSKPoint(), <span class="number">3</span>, redPaint);</span><br><span class="line">            canvas.DrawCircle(leftEndHeadPos.ToSKPoint(), <span class="number">3</span>, greenPaint);</span><br><span class="line">            canvas.DrawCircle(rightEndHeadPos.ToSKPoint(), <span class="number">3</span>, greenPaint);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><ol>
+<li><strong>核心向量运算</strong>：箭头绘制的关键是通过<strong>向量减法</strong>获取方向、<strong>归一化</strong>消除长度影响、<strong>法向量</strong>获取垂直方向、<strong>缩放+加法</strong>实现点位偏移；</li>
+<li><strong>关键公式</strong>：<ul>
+<li>方向向量：$\vec{direction} &#x3D; E - S$</li>
+<li>单位向量：$\hat{direction} &#x3D; \vec{direction} &#x2F; |\vec{direction}|$</li>
+<li>箭头中心点：$P_{center} &#x3D; E - Gap \cdot \hat{direction}$</li>
+<li>左右端点：$P_{left&#x2F;right} &#x3D; P_{center} ± Gap \cdot (y_{\hat{direction}}, -x_{\hat{direction}})$；</li>
+</ul>
+</li>
+<li><strong>扩展建议</strong>：可通过调整 Gap 参数控制箭头大小，若需为线段起点绘制箭头，仅需反转方向向量的计算逻辑（$\vec{direction} &#x3D; S - E$）即可。</li>
+</ol>
+
+  </div>
+</article>
+
+
+    <div class="blog-post-comments">
+        <div id="utterances_thread">
+            <noscript>加载评论需要在浏览器启用 JavaScript 脚本支持。</noscript>
+        </div>
+    </div>
+
+
+        
+          <div id="footer-post-container">
+  <div id="footer-post">
+
+    <div id="nav-footer" style="display: none">
+      <ul>
+        
+          <li><a href="/">首页</a></li>
+        
+          <li><a href="/about/">关于</a></li>
+        
+          <li><a href="/archives/">归档</a></li>
+        
+          <li><a href="/search/">搜索</a></li>
+        
+          <li><a href="/tags/">标签</a></li>
+        
+          <li><a href="/categories/">分类</a></li>
+        
+          <li><a target="_blank" rel="noopener" href="https://github.com/as436845345/">项目</a></li>
+        
+      </ul>
+    </div>
+
+    
+    
+      <div id="toc-footer" style="display: none">
+        <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9C%80%E5%90%8E%E6%9B%B4%E6%96%B0%E6%97%B6%E9%97%B4%EF%BC%9A2026-02-20-21-08-05"><span class="toc-number">1.</span> <span class="toc-text">最后更新时间：2026-02-20 21:08:05</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80%E3%80%81%E6%A0%B8%E5%BF%83%E9%9C%80%E6%B1%82%E6%A6%82%E8%BF%B0"><span class="toc-number"></span> <span class="toc-text">一、核心需求概述</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%8C%E3%80%81%E5%90%91%E9%87%8F%E5%9F%BA%E7%A1%80%E5%AE%9A%E4%B9%89"><span class="toc-number"></span> <span class="toc-text">二、向量基础定义</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-%E4%BA%8C%E7%BB%B4%E5%90%91%E9%87%8F%E7%BB%93%E6%9E%84%E4%BD%93%EF%BC%88PEVector%EF%BC%89"><span class="toc-number">1.</span> <span class="toc-text">1. 二维向量结构体（PEVector）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-%E5%90%91%E9%87%8F%E5%85%B3%E9%94%AE%E6%A6%82%E5%BF%B5%E8%A1%A5%E5%85%85"><span class="toc-number">2.</span> <span class="toc-text">2. 向量关键概念补充</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%89%E3%80%81%E7%AE%AD%E5%A4%B4%E7%BB%98%E5%88%B6%E5%AE%8C%E6%95%B4%E6%B5%81%E7%A8%8B%EF%BC%88%E9%99%84%E6%95%B0%E5%AD%A6%E5%85%AC%E5%BC%8F%EF%BC%89"><span class="toc-number"></span> <span class="toc-text">三、箭头绘制完整流程（附数学公式）</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%AD%A5%E9%AA%A41%EF%BC%9A%E5%AE%9A%E4%B9%89%E5%9F%BA%E7%A1%80%E5%8F%82%E6%95%B0%E4%B8%8E%E7%BA%BF%E6%AE%B5%E8%B5%B7%E7%82%B9-%E7%BB%88%E7%82%B9"><span class="toc-number">1.</span> <span class="toc-text">步骤1：定义基础参数与线段起点&#x2F;终点</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%AD%A5%E9%AA%A42%EF%BC%9A%E8%AE%A1%E7%AE%97%E7%BA%BF%E6%AE%B5%E7%9A%84%E6%96%B9%E5%90%91%E5%90%91%E9%87%8F"><span class="toc-number">2.</span> <span class="toc-text">步骤2：计算线段的方向向量</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%AD%A5%E9%AA%A43%EF%BC%9A%E5%B0%86%E6%96%B9%E5%90%91%E5%90%91%E9%87%8F%E5%BD%92%E4%B8%80%E5%8C%96%EF%BC%88%E8%BD%AC%E4%B8%BA%E5%8D%95%E4%BD%8D%E5%90%91%E9%87%8F%EF%BC%89"><span class="toc-number">3.</span> <span class="toc-text">步骤3：将方向向量归一化（转为单位向量）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%AD%A5%E9%AA%A44%EF%BC%9A%E8%AE%A1%E7%AE%97%E7%AE%AD%E5%A4%B4%E4%B8%AD%E5%BF%83%E7%82%B9%EF%BC%88%E7%AE%AD%E5%A4%B4%E6%96%9C%E8%BE%B9%E7%9A%84%E4%BA%A4%E6%B1%87%E8%B5%B7%E7%82%B9%EF%BC%89"><span class="toc-number">4.</span> <span class="toc-text">步骤4：计算箭头中心点（箭头斜边的交汇起点）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%AD%A5%E9%AA%A45%EF%BC%9A%E8%AE%A1%E7%AE%97%E5%B7%A6%E4%BE%A7%E6%96%9C%E8%BE%B9%E7%9A%84%E7%AB%AF%E7%82%B9"><span class="toc-number">5.</span> <span class="toc-text">步骤5：计算左侧斜边的端点</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%AD%A5%E9%AA%A46%EF%BC%9A%E8%AE%A1%E7%AE%97%E5%8F%B3%E4%BE%A7%E6%96%9C%E8%BE%B9%E7%9A%84%E7%AB%AF%E7%82%B9"><span class="toc-number">6.</span> <span class="toc-text">步骤6：计算右侧斜边的端点</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%AD%A5%E9%AA%A47%EF%BC%88%E5%8F%AF%E9%80%89%EF%BC%89%EF%BC%9A%E7%BB%98%E5%88%B6%E8%BE%85%E5%8A%A9%E5%AE%9A%E4%BD%8D%E5%9C%86"><span class="toc-number">7.</span> <span class="toc-text">步骤7（可选）：绘制辅助定位圆</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9B%9B%E3%80%81%E5%AE%8C%E6%95%B4%E4%BB%A3%E7%A0%81%E6%95%B4%E5%90%88"><span class="toc-number"></span> <span class="toc-text">四、完整代码整合</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-number">1.</span> <span class="toc-text">总结</span></a></li></ol>
+      </div>
+    
+
+    <div id="share-footer" style="display: none">
+      <ul>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.facebook.com/sharer.php?u=https://as436845345.github.io/2026/02/20/vector-based-arrow-rendering-for-line-segments-md/"><i class="fab fa-facebook fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=https://as436845345.github.io/2026/02/20/vector-based-arrow-rendering-for-line-segments-md/&text=基于向量的线段箭头绘制详解"><i class="fab fa-twitter fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=https://as436845345.github.io/2026/02/20/vector-based-arrow-rendering-for-line-segments-md/&title=基于向量的线段箭头绘制详解"><i class="fab fa-linkedin fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=https://as436845345.github.io/2026/02/20/vector-based-arrow-rendering-for-line-segments-md/&is_video=false&description=基于向量的线段箭头绘制详解"><i class="fab fa-pinterest fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=基于向量的线段箭头绘制详解&body=Check out this article: https://as436845345.github.io/2026/02/20/vector-based-arrow-rendering-for-line-segments-md/"><i class="fa-solid fa-envelope fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=https://as436845345.github.io/2026/02/20/vector-based-arrow-rendering-for-line-segments-md/&title=基于向量的线段箭头绘制详解"><i class="fab fa-get-pocket fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=https://as436845345.github.io/2026/02/20/vector-based-arrow-rendering-for-line-segments-md/&title=基于向量的线段箭头绘制详解"><i class="fab fa-reddit fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=https://as436845345.github.io/2026/02/20/vector-based-arrow-rendering-for-line-segments-md/&title=基于向量的线段箭头绘制详解"><i class="fab fa-stumbleupon fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=https://as436845345.github.io/2026/02/20/vector-based-arrow-rendering-for-line-segments-md/&title=基于向量的线段箭头绘制详解"><i class="fab fa-digg fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=https://as436845345.github.io/2026/02/20/vector-based-arrow-rendering-for-line-segments-md/&name=基于向量的线段箭头绘制详解&description="><i class="fab fa-tumblr fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=https://as436845345.github.io/2026/02/20/vector-based-arrow-rendering-for-line-segments-md/&t=基于向量的线段箭头绘制详解"><i class="fab fa-hacker-news fa-lg" aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+
+    <div id="actions-footer">
+        <a id="menu" class="icon" href="#" onclick="$('#nav-footer').toggle();return false;"><i class="fa-solid fa-bars fa-lg" aria-hidden="true"></i> 菜单</a>
+        
+          <a id="toc" class="icon" href="#" onclick="$('#toc-footer').toggle();return false;"><i class="fa-solid fa-list fa-lg" aria-hidden="true"></i> 目录</a>
+        
+        <a id="share" class="icon" href="#" onclick="$('#share-footer').toggle();return false;"><i class="fa-solid fa-share-alt fa-lg" aria-hidden="true"></i> 分享</a>
+        <a id="top" style="display:none" class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fa-solid fa-chevron-up fa-lg" aria-hidden="true"></i> 返回顶部</a>
+    </div>
+
+  </div>
+</div>
+
+        
+        <footer id="footer">
+  <div class="footer-left">
+    Copyright &copy;
+    
+    
+    2016-2026
+    Ljhhhh
+  </div>
+  <div class="footer-right">
+    <nav>
+      <ul>
+        <!--
+       --><li><a href="/">首页</a></li><!--
+     --><!--
+       --><li><a href="/about/">关于</a></li><!--
+     --><!--
+       --><li><a href="/archives/">归档</a></li><!--
+     --><!--
+       --><li><a href="/search/">搜索</a></li><!--
+     --><!--
+       --><li><a href="/tags/">标签</a></li><!--
+     --><!--
+       --><li><a href="/categories/">分类</a></li><!--
+     --><!--
+       --><li><a target="_blank" rel="noopener" href="https://github.com/as436845345/">项目</a></li><!--
+     -->
+      </ul>
+    </nav>
+  </div>
+</footer>
+
+    </div>
+    <!-- styles -->
+
+
+
+  <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous" onload="this.onload=null;this.rel='stylesheet'"/>
+
+
+    <!-- jquery -->
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" crossorigin="anonymous"></script>
+
+
+
+
+<!-- clipboard -->
+
+  
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.7/clipboard.min.js" crossorigin="anonymous"></script>
+  
+  <script type="text/javascript">
+  $(function() {
+    // copy-btn HTML
+    var btn = "<span class=\"btn-copy tooltipped tooltipped-sw\" aria-label=\"复制到粘贴板！\">";
+    btn += '<i class="fa-regular fa-clone"></i>';
+    btn += '</span>';
+    // mount it!
+    $(".highlight table").before(btn);
+    var clip = new ClipboardJS('.btn-copy', {
+      text: function(trigger) {
+        return Array.from(trigger.nextElementSibling.querySelectorAll('.code')).reduce((str,it)=>str+it.innerText+'\n','')
+      }
+    });
+    clip.on('success', function(e) {
+      e.trigger.setAttribute('aria-label', "复制成功！");
+      e.clearSelection();
+    })
+  })
+  </script>
+
+
+<script src="/js/main.js"></script>
+
+<!-- search -->
+
+<!-- Baidu Analytics -->
+
+<!-- Cloudflare Analytics -->
+
+<!-- Disqus Comments -->
+
+<!-- utterances Comments -->
+
+    <script type="text/javascript">
+      var utterances_repo = 'as436845345/as436845345.github.io';
+      var utterances_issue_term = 'pathname';
+      var utterances_label = 'utterance';
+      var utterances_theme = 'github-light';
+
+      (function(){
+          var script = document.createElement('script');
+
+          script.src = 'https://utteranc.es/client.js';
+          script.setAttribute('repo', utterances_repo);
+          script.setAttribute('issue-term', 'pathname');
+          script.setAttribute('label', utterances_label);
+          script.setAttribute('theme', utterances_theme);
+          script.setAttribute('crossorigin', 'anonymous');
+          script.async = true;
+          (document.getElementById('utterances_thread')).appendChild(script);
+      }());
+  </script>
+
+</body>
+</html>

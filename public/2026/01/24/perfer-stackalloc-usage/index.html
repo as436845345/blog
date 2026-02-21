@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang=zh>
+<head>
+    <!-- so meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
+    <meta name="description" content="最后更新时间：2026-02-20 19:54:51本文通过豆包+ChatGpt辅助生成！  在 .NET 性能优化领域，stackalloc 是绕不开的核心关键词。它允许开发者直接在当前方法的栈帧上分配连续内存，彻底绕过 GC 管理、避免堆分配开销，更是 Span&lt;T&gt; 等高性能 API 的底层基石。 但 stackalloc 犹如一把“双刃剑”：用得好能成为性能飙升的利器，用不好则">
+<meta property="og:type" content="article">
+<meta property="og:title" content="尽量使用 stackalloc 表达式">
+<meta property="og:url" content="https://as436845345.github.io/2026/01/24/perfer-stackalloc-usage/index.html">
+<meta property="og:site_name" content="Ljhhhh的博客">
+<meta property="og:description" content="最后更新时间：2026-02-20 19:54:51本文通过豆包+ChatGpt辅助生成！  在 .NET 性能优化领域，stackalloc 是绕不开的核心关键词。它允许开发者直接在当前方法的栈帧上分配连续内存，彻底绕过 GC 管理、避免堆分配开销，更是 Span&lt;T&gt; 等高性能 API 的底层基石。 但 stackalloc 犹如一把“双刃剑”：用得好能成为性能飙升的利器，用不好则">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2026-01-24T05:33:17.000Z">
+<meta property="article:modified_time" content="2026-02-20T11:55:02.368Z">
+<meta property="article:author" content="Ljhhhh">
+<meta property="article:tag" content="C#">
+<meta property="article:tag" content="stackalloc">
+<meta name="twitter:card" content="summary">
+    
+    
+      
+        
+          <link rel="shortcut icon" href="/images/favicon.ico">
+        
+      
+      
+        
+          <link rel="icon" type="image/png" href="/images/favicon-192x192.png" sizes="192x192">
+        
+      
+      
+        
+          <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+        
+      
+    
+    <!-- title -->
+    <title>尽量使用 stackalloc 表达式</title>
+    <!-- async scripts -->
+    <!-- Google Analytics -->
+
+
+    <!-- Umami Analytics -->
+
+
+    <!-- styles -->
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <!-- persian styles -->
+    
+    <!-- rss -->
+    
+    
+	<!-- mathjax -->
+	
+		<script type="text/x-mathjax-config">
+		  MathJax.Hub.Config({
+			tex2jax: {
+			  skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+			  inlineMath: [['$','$']]
+			},
+      CommonHTML: {
+        scale: 140
+      }
+		  });
+		</script>
+		<script src='https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML' async></script>
+	
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+<body class="max-width mx-auto px3 ltr">
+    
+      <div id="header-post">
+  <a id="menu-icon" href="#" aria-label="目录"><i class="fa-solid fa-bars fa-lg"></i></a>
+  <a id="menu-icon-tablet" href="#" aria-label="目录"><i class="fa-solid fa-bars fa-lg"></i></a>
+  <a id="top-icon-tablet" href="#" aria-label="顶部" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');" style="display:none;"><i class="fa-solid fa-chevron-up fa-lg"></i></a>
+  <span id="menu">
+    <span id="nav">
+      <ul>
+        <!--
+       --><li><a href="/">首页</a></li><!--
+     --><!--
+       --><li><a href="/about/">关于</a></li><!--
+     --><!--
+       --><li><a href="/archives/">归档</a></li><!--
+     --><!--
+       --><li><a href="/search/">搜索</a></li><!--
+     --><!--
+       --><li><a href="/tags/">标签</a></li><!--
+     --><!--
+       --><li><a href="/categories/">分类</a></li><!--
+     --><!--
+       --><li><a target="_blank" rel="noopener" href="https://github.com/as436845345/">项目</a></li><!--
+     -->
+      </ul>
+    </span>
+    <br/>
+    <span id="actions">
+      <ul>
+        
+        <li><a class="icon" aria-label="上一篇" href="/2026/02/20/vector-based-arrow-rendering-for-line-segments-md/"><i class="fa-solid fa-chevron-left" aria-hidden="true" onmouseover="$('#i-prev').toggle();" onmouseout="$('#i-prev').toggle();"></i></a></li>
+        
+        
+        <li><a class="icon" aria-label="下一篇" href="/2026/01/19/span-usage/"><i class="fa-solid fa-chevron-right" aria-hidden="true" onmouseover="$('#i-next').toggle();" onmouseout="$('#i-next').toggle();"></i></a></li>
+        
+        <li><a class="icon" aria-label="返回顶部" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fa-solid fa-chevron-up" aria-hidden="true" onmouseover="$('#i-top').toggle();" onmouseout="$('#i-top').toggle();"></i></a></li>
+        <li><a class="icon" aria-label="分享文章" href="#"><i class="fa-solid fa-share-alt" aria-hidden="true" onmouseover="$('#i-share').toggle();" onmouseout="$('#i-share').toggle();" onclick="$('#share').toggle();return false;"></i></a></li>
+      </ul>
+      <span id="i-prev" class="info" style="display:none;">上一篇</span>
+      <span id="i-next" class="info" style="display:none;">下一篇</span>
+      <span id="i-top" class="info" style="display:none;">返回顶部</span>
+      <span id="i-share" class="info" style="display:none;">分享文章</span>
+    </span>
+    <br/>
+    <div id="share" style="display: none">
+      <ul>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.facebook.com/sharer.php?u=https://as436845345.github.io/2026/01/24/perfer-stackalloc-usage/"><i class="fab fa-facebook " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=https://as436845345.github.io/2026/01/24/perfer-stackalloc-usage/&text=尽量使用 stackalloc 表达式"><i class="fab fa-twitter " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=https://as436845345.github.io/2026/01/24/perfer-stackalloc-usage/&title=尽量使用 stackalloc 表达式"><i class="fab fa-linkedin " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=https://as436845345.github.io/2026/01/24/perfer-stackalloc-usage/&is_video=false&description=尽量使用 stackalloc 表达式"><i class="fab fa-pinterest " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=尽量使用 stackalloc 表达式&body=Check out this article: https://as436845345.github.io/2026/01/24/perfer-stackalloc-usage/"><i class="fa-solid fa-envelope " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=https://as436845345.github.io/2026/01/24/perfer-stackalloc-usage/&title=尽量使用 stackalloc 表达式"><i class="fab fa-get-pocket " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=https://as436845345.github.io/2026/01/24/perfer-stackalloc-usage/&title=尽量使用 stackalloc 表达式"><i class="fab fa-reddit " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=https://as436845345.github.io/2026/01/24/perfer-stackalloc-usage/&title=尽量使用 stackalloc 表达式"><i class="fab fa-stumbleupon " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=https://as436845345.github.io/2026/01/24/perfer-stackalloc-usage/&title=尽量使用 stackalloc 表达式"><i class="fab fa-digg " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=https://as436845345.github.io/2026/01/24/perfer-stackalloc-usage/&name=尽量使用 stackalloc 表达式&description="><i class="fab fa-tumblr " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=https://as436845345.github.io/2026/01/24/perfer-stackalloc-usage/&t=尽量使用 stackalloc 表达式"><i class="fab fa-hacker-news " aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+    
+    
+      <div id="toc">
+        <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9C%80%E5%90%8E%E6%9B%B4%E6%96%B0%E6%97%B6%E9%97%B4%EF%BC%9A2026-02-20-19-54-51"><span class="toc-number">1.</span> <span class="toc-text">最后更新时间：2026-02-20 19:54:51</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80%E3%80%81stackalloc-%E6%A0%B8%E5%BF%83%E6%A6%82%E8%BF%B0"><span class="toc-number"></span> <span class="toc-text">一、stackalloc 核心概述</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-%E4%BB%80%E4%B9%88%E6%98%AF-stackalloc%EF%BC%9F"><span class="toc-number">1.</span> <span class="toc-text">1. 什么是 stackalloc？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-%E4%B8%A4%E7%A7%8D%E5%9F%BA%E6%9C%AC%E5%88%9B%E5%BB%BA%E6%96%B9%E5%BC%8F"><span class="toc-number">2.</span> <span class="toc-text">2. 两种基本创建方式</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#2-1-Span-stackalloc%EF%BC%88%E7%8E%B0%E4%BB%A3%E6%8E%A8%E8%8D%90%EF%BC%89"><span class="toc-number">2.1.</span> <span class="toc-text">2-1. Span + stackalloc（现代推荐）</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2-2-%E8%A3%B8%E6%8C%87%E9%92%88%E5%BD%A2%E5%BC%8F%EF%BC%88%E5%BA%95%E5%B1%82-%E4%B8%8D%E5%AE%89%E5%85%A8%E5%9C%BA%E6%99%AF%EF%BC%89"><span class="toc-number">2.2.</span> <span class="toc-text">2-2. 裸指针形式（底层&#x2F;不安全场景）</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%8C%E3%80%81stackalloc-%E7%9A%84%E6%A0%B8%E5%BF%83%E4%BC%98%E5%8A%BF"><span class="toc-number"></span> <span class="toc-text">二、stackalloc 的核心优势</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-%E5%BD%BB%E5%BA%95%E9%81%BF%E5%85%8D%E5%A0%86%E5%88%86%E9%85%8D%E5%BC%80%E9%94%80"><span class="toc-number">1.</span> <span class="toc-text">1. 彻底避免堆分配开销</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-%E4%B8%8E-Span-%E5%A4%A9%E7%84%B6%E5%A5%91%E5%90%88"><span class="toc-number">2.</span> <span class="toc-text">2. 与 Span 天然契合</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%89%E3%80%81stackalloc-%E7%9A%84%E9%99%90%E5%88%B6%E4%B8%8E%E6%BD%9C%E5%9C%A8%E9%A3%8E%E9%99%A9"><span class="toc-number"></span> <span class="toc-text">三、stackalloc 的限制与潜在风险</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-%E6%A0%88%E7%A9%BA%E9%97%B4%E6%9C%89%E9%99%90%EF%BC%8C%E8%B6%85%E5%A4%A7%E5%88%86%E9%85%8D%E6%98%93%E6%BA%A2%E5%87%BA"><span class="toc-number">1.</span> <span class="toc-text">1. 栈空间有限，超大分配易溢出</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-%E6%A0%88%E6%BA%A2%E5%87%BA%E6%98%AF%E4%B8%8D%E5%8F%AF%E6%81%A2%E5%A4%8D%E7%9A%84%E8%87%B4%E5%91%BD%E9%94%99%E8%AF%AF"><span class="toc-number">2.</span> <span class="toc-text">2. 栈溢出是不可恢复的致命错误</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F%E4%B8%A5%E6%A0%BC%E5%8F%97%E9%99%90%EF%BC%8C%E6%97%A0%E6%B3%95%E8%B7%A8%E5%9C%BA%E6%99%AF%E4%BC%A0%E9%80%92"><span class="toc-number">3.</span> <span class="toc-text">3. 生命周期严格受限，无法跨场景传递</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9B%9B%E3%80%81%E6%8E%A8%E8%8D%90%E6%A8%A1%E5%BC%8F%EF%BC%9Astackalloc-ArrayPool-%E7%BB%84%E5%90%88%E4%BD%BF%E7%94%A8"><span class="toc-number"></span> <span class="toc-text">四、推荐模式：stackalloc + ArrayPool 组合使用</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-%E7%BB%84%E5%90%88%E7%9A%84%E6%A0%B8%E5%BF%83%E9%80%BB%E8%BE%91"><span class="toc-number">1.</span> <span class="toc-text">1. 组合的核心逻辑</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-%E5%8F%AF%E7%9B%B4%E6%8E%A5%E5%A4%8D%E7%94%A8%E7%9A%84%E4%BB%A3%E7%A0%81%E5%AE%9E%E7%8E%B0"><span class="toc-number">2.</span> <span class="toc-text">2. 可直接复用的代码实现</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-%E6%A8%A1%E5%BC%8F%E8%83%8C%E5%90%8E%E7%9A%84-NET-%E6%80%A7%E8%83%BD%E5%93%B2%E5%AD%A6"><span class="toc-number">3.</span> <span class="toc-text">3. 模式背后的 .NET 性能哲学</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%94%E3%80%81%E6%80%BB%E7%BB%93%E4%B8%8E%E4%BD%BF%E7%94%A8%E5%BB%BA%E8%AE%AE"><span class="toc-number"></span> <span class="toc-text">五、总结与使用建议</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%80%E5%8F%A5%E8%AF%9D%E6%80%BB%E7%BB%93-stackalloc"><span class="toc-number">1.</span> <span class="toc-text">一句话总结 stackalloc</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%80%82%E7%94%A8%E5%9C%BA%E6%99%AF%EF%BC%88%E2%9C%85-%E6%8E%A8%E8%8D%90%EF%BC%89"><span class="toc-number">2.</span> <span class="toc-text">适用场景（✅ 推荐）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%8D%E9%80%82%E7%94%A8%E5%9C%BA%E6%99%AF%EF%BC%88%E2%9D%8C-%E9%81%BF%E5%85%8D%EF%BC%89"><span class="toc-number">3.</span> <span class="toc-text">不适用场景（❌ 避免）</span></a></li></ol>
+      </div>
+    
+  </span>
+</div>
+
+    
+    <div class="content index py4 ">
+        
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+  <header>
+    
+    <h1 class="posttitle p-name" itemprop="name headline">
+        尽量使用 stackalloc 表达式
+    </h1>
+
+
+
+    <div class="meta">
+      <span class="author p-author h-card" itemprop="author" itemscope itemtype="http://schema.org/Person">
+        <span class="p-name" itemprop="name">Ljhhhh</span>
+      </span>
+      
+    <div class="postdate">
+      
+        <time datetime="2026-01-24T05:33:17.000Z" class="dt-published" itemprop="datePublished">2026-01-24</time>
+        
+      
+    </div>
+
+
+      
+    <div class="article-category">
+        <i class="fa-solid fa-archive"></i>
+        <a class="category-link" href="/categories/C/">C#</a> › <a class="category-link" href="/categories/C/stackalloc/">stackalloc</a>
+    </div>
+
+
+      
+    <div class="article-tag">
+        <i class="fa-solid fa-tag"></i>
+        <a class="p-category" href="/tags/C/" rel="tag">C#</a>, <a class="p-category" href="/tags/stackalloc/" rel="tag">stackalloc</a>
+    </div>
+
+
+    </div>
+  </header>
+  
+
+  <div class="content e-content" itemprop="articleBody">
+    <h3 id="最后更新时间：2026-02-20-19-54-51"><a href="#最后更新时间：2026-02-20-19-54-51" class="headerlink" title="最后更新时间：2026-02-20 19:54:51"></a><strong>最后更新时间：2026-02-20 19:54:51</strong></h3><p>本文通过豆包+ChatGpt辅助生成！</p>
+<hr>
+<p>在 .NET 性能优化领域，stackalloc 是绕不开的核心关键词。它允许开发者<strong>直接在当前方法的栈帧上分配连续内存</strong>，彻底绕过 GC 管理、避免堆分配开销，更是 Span&lt;T&gt; 等高性能 API 的底层基石。</p>
+<p>但 stackalloc 犹如一把“双刃剑”：用得好能成为性能飙升的利器，用不好则可能引发 StackOverflowException 或隐藏的生命周期 bug。本文将系统拆解其核心逻辑、优势、限制，并给出“栈+对象池”的推荐使用模式。</p>
+<h2 id="一、stackalloc-核心概述"><a href="#一、stackalloc-核心概述" class="headerlink" title="一、stackalloc 核心概述"></a>一、stackalloc 核心概述</h2><h3 id="1-什么是-stackalloc？"><a href="#1-什么是-stackalloc？" class="headerlink" title="1. 什么是 stackalloc？"></a>1. 什么是 stackalloc？</h3><p>stackalloc 是 .NET 中的<strong>内存分配表达式</strong>，核心作用是在<strong>当前方法的调用栈（stack frame）上</strong>分配一段连续内存。</p>
+<p>其核心语义（必须牢记）：</p>
+<ul>
+<li>分配位置：仅限当前线程的调用栈，而非托管堆；</li>
+<li>生命周期：与当前方法绑定，方法执行完毕后，栈指针回退，内存自动释放；</li>
+<li>释放方式：无需手动释放，也不允许显式释放；</li>
+<li>GC 交互：完全不受 GC 管理，GC 无法感知这段内存；</li>
+<li>内存固定：无需 fixed 关键字，栈内存天然不会被 GC 移动。</li>
+</ul>
+<p>这是它与 new T[] 堆分配的本质区别——堆分配需 GC 跟踪、回收，而栈分配是“即用即弃”的确定性内存操作。</p>
+<h3 id="2-两种基本创建方式"><a href="#2-两种基本创建方式" class="headerlink" title="2. 两种基本创建方式"></a>2. 两种基本创建方式</h3><p>stackalloc 支持两种使用形式，语义层级和适用场景不同，现代开发更推荐第一种：</p>
+<h4 id="2-1-Span-stackalloc（现代推荐）"><a href="#2-1-Span-stackalloc（现代推荐）" class="headerlink" title="2-1. Span + stackalloc（现代推荐）"></a>2-1. Span<T> + stackalloc（现代推荐）</h4><figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Span&lt;<span class="built_in">int</span>&gt; buffer = <span class="keyword">stackalloc</span> <span class="built_in">int</span>[] &#123; <span class="number">1</span>, <span class="number">2</span> &#125;;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>本质：在栈上分配 int[2] 数组，返回 Span&lt;T&gt; 作为内存视图；</li>
+<li>优势：编译器强制生命周期安全检查，无需 unsafe 块，可在安全代码中使用；</li>
+<li>适用场景：绝大多数高性能内存操作场景，是当前 .NET 推荐的主流用法。</li>
+</ul>
+<h4 id="2-2-裸指针形式（底层-不安全场景）"><a href="#2-2-裸指针形式（底层-不安全场景）" class="headerlink" title="2-2. 裸指针形式（底层&#x2F;不安全场景）"></a>2-2. 裸指针形式（底层&#x2F;不安全场景）</h4><figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">unsafe</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="built_in">int</span>* buffer = <span class="keyword">stackalloc</span> <span class="built_in">int</span>[] &#123; <span class="number">1</span>, <span class="number">2</span> &#125;;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>本质：直接返回指向栈内存的裸指针（int*）；</li>
+<li>风险：编译器不再做生命周期检查，极易出现<strong>悬垂指针（访问已释放的栈内存）</strong>；</li>
+<li>适用场景：仅用于底层非托管交互、极致性能优化等特殊场景，需手动保证内存安全。</li>
+</ul>
+<blockquote>
+<p>现代 .NET 开发共识：stackalloc 几乎总是与 Span&lt;T&gt; 配合使用，避免直接操作裸指针。</p>
+</blockquote>
+<h2 id="二、stackalloc-的核心优势"><a href="#二、stackalloc-的核心优势" class="headerlink" title="二、stackalloc 的核心优势"></a>二、stackalloc 的核心优势</h2><h3 id="1-彻底避免堆分配开销"><a href="#1-彻底避免堆分配开销" class="headerlink" title="1. 彻底避免堆分配开销"></a>1. 彻底避免堆分配开销</h3><figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Span&lt;<span class="built_in">byte</span>&gt; buffer = <span class="keyword">stackalloc</span> <span class="built_in">byte</span>[<span class="number">256</span>];</span><br></pre></td></tr></table></figure>
+
+<p>这段代码不会产生任何堆分配相关的开销：</p>
+<ul>
+<li>无 newobj 指令（堆分配的核心指令）；</li>
+<li>无 GC 跟踪成本（GC 无需记录这段内存）；</li>
+<li>无对象代际晋升（堆分配的小对象易进入 Gen 0，触发频繁 GC）。</li>
+</ul>
+<p>对比堆分配（new byte[256]），栈分配省去了“查找堆空闲区域、写入对象头、零初始化内存”等步骤，在高频调用场景（如循环内创建临时缓冲区）中性能优势极其明显。</p>
+<h3 id="2-与-Span-天然契合"><a href="#2-与-Span-天然契合" class="headerlink" title="2. 与 Span 天然契合"></a>2. 与 Span<T> 天然契合</h3><p>Span&lt;T&gt; 本身是 <code>ref struct</code> 类型，设计目标就是“安全操作连续内存”，其特性与 stackalloc 完美匹配：</p>
+<ul>
+<li>Span&lt;T&gt; 不能装箱、不能逃逸到堆、不能跨 async&#x2F;await；</li>
+<li>编译器强制 Span&lt;T&gt; 的生命周期不超过其引用的内存（如栈内存）；</li>
+<li>两者结合既保留了栈分配的高性能，又通过 Span&lt;T&gt; 的安全检查避免了内存风险。</li>
+</ul>
+<p>这种组合是 .NET 高性能内存操作的“黄金搭档”，广泛应用于 System.Text.Json、Socket、Pipelines 等底层 API 中。</p>
+<h2 id="三、stackalloc-的限制与潜在风险"><a href="#三、stackalloc-的限制与潜在风险" class="headerlink" title="三、stackalloc 的限制与潜在风险"></a>三、stackalloc 的限制与潜在风险</h2><h3 id="1-栈空间有限，超大分配易溢出"><a href="#1-栈空间有限，超大分配易溢出" class="headerlink" title="1. 栈空间有限，超大分配易溢出"></a>1. 栈空间有限，超大分配易溢出</h3><p>这是 stackalloc 最常见也最危险的问题。以下代码会直接触发 StackOverflowException：</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Span&lt;<span class="built_in">byte</span>&gt; buffer = <span class="keyword">stackalloc</span> <span class="built_in">byte</span>[<span class="number">1024</span> * <span class="number">1024</span>]; <span class="comment">// ❌ 1MB 栈分配，远超栈容量</span></span><br></pre></td></tr></table></figure>
+
+<p>核心原因：</p>
+<ul>
+<li>每个 .NET 线程的栈大小是固定的（默认 1MB~8MB，取决于操作系统和架构）；</li>
+<li>栈空间并非仅用于 stackalloc 分配，还需容纳：方法局部变量、函数调用链、JIT 临时变量、ABI 内存对齐等；</li>
+<li>即使是 512KB 的 stackalloc 分配，也可能因当前栈空间已被占用而溢出。</li>
+</ul>
+<h3 id="2-栈溢出是不可恢复的致命错误"><a href="#2-栈溢出是不可恢复的致命错误" class="headerlink" title="2. 栈溢出是不可恢复的致命错误"></a>2. 栈溢出是不可恢复的致命错误</h3><p>这是 stackalloc 与堆分配的关键区别：</p>
+<ul>
+<li>堆分配失败（OutOfMemoryException）：可通过 try-catch 捕获，程序有机会恢复；</li>
+<li>栈溢出（StackOverflowException）：.NET 不允许捕获，直接导致<strong>进程终止</strong>。</li>
+</ul>
+<p>这意味着：一次未做限制的 stackalloc 调用，可能直接让整个应用崩溃。</p>
+<h3 id="3-生命周期严格受限，无法跨场景传递"><a href="#3-生命周期严格受限，无法跨场景传递" class="headerlink" title="3. 生命周期严格受限，无法跨场景传递"></a>3. 生命周期严格受限，无法跨场景传递</h3><p>stackalloc 分配的内存生命周期与当前方法完全绑定，编译器会强制阻止“内存逃逸”：</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">Span&lt;<span class="built_in">int</span>&gt; <span class="title">GetStackAllocSpan</span>()</span></span><br><span class="line">&#123;</span><br><span class="line">    Span&lt;<span class="built_in">int</span>&gt; buffer = <span class="keyword">stackalloc</span> <span class="built_in">int</span>[<span class="number">4</span>];</span><br><span class="line">    <span class="keyword">return</span> buffer; <span class="comment">// ❌ 编译报错：无法返回指向栈内存的 Span</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>类似的限制还包括：</p>
+<ul>
+<li>不能将栈内存的 Span&lt;T&gt; 存入类的字段；</li>
+<li>不能在 lambda&#x2F;闭包 中捕获栈内存引用；</li>
+<li>不能跨 async&#x2F;await 传递（异步方法会切换调用栈）。</li>
+</ul>
+<p>这些限制是编译器的“安全护栏”，避免开发者无意间使用已释放的栈内存。</p>
+<h2 id="四、推荐模式：stackalloc-ArrayPool-组合使用"><a href="#四、推荐模式：stackalloc-ArrayPool-组合使用" class="headerlink" title="四、推荐模式：stackalloc + ArrayPool 组合使用"></a>四、推荐模式：stackalloc + ArrayPool 组合使用</h2><h3 id="1-组合的核心逻辑"><a href="#1-组合的核心逻辑" class="headerlink" title="1. 组合的核心逻辑"></a>1. 组合的核心逻辑</h3><p>现实开发中，临时缓冲区的大小往往不固定：</p>
+<ul>
+<li>小缓冲区（如 ≤ 1KB）：stackalloc 性能最优，无 GC 开销；</li>
+<li>大缓冲区（如 &gt; 1KB）：栈空间不足，无法用 stackalloc；</li>
+<li>直接 new T[]：高频调用会产生大量临时对象，引发 GC 压力。</li>
+</ul>
+<p>解决方案：<strong>小用栈，大用池</strong>——通过阈值区分，小缓冲区用 stackalloc，大缓冲区用 ArrayPool&lt;T&gt; 复用，兼顾性能与安全性。</p>
+<h3 id="2-可直接复用的代码实现"><a href="#2-可直接复用的代码实现" class="headerlink" title="2. 可直接复用的代码实现"></a>2. 可直接复用的代码实现</h3><figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">ProcessBuffer</span>(<span class="params"><span class="built_in">int</span> length</span>)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// 设定栈分配阈值（推荐 1024 字节，可根据场景调整）</span></span><br><span class="line">    <span class="keyword">const</span> <span class="built_in">int</span> MAX_STACKALLOC_SIZE = <span class="number">1024</span>;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">int</span>[]? pooledArray = <span class="literal">null</span>;</span><br><span class="line">    <span class="comment">// 按长度选择分配方式：小尺寸栈分配，大尺寸对象池租借</span></span><br><span class="line">    Span&lt;<span class="built_in">int</span>&gt; buffer = length &lt;= MAX_STACKALLOC_SIZE </span><br><span class="line">        ? <span class="keyword">stackalloc</span> <span class="built_in">int</span>[length] </span><br><span class="line">        : (pooledArray = ArrayPool&lt;<span class="built_in">int</span>&gt;.Shared.Rent(length)).AsSpan();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">try</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">// 业务逻辑：安全操作 buffer（读写、切片等）</span></span><br><span class="line">        <span class="keyword">if</span> (buffer.Length &gt; <span class="number">0</span>)</span><br><span class="line">        &#123;</span><br><span class="line">            buffer[<span class="number">0</span>] = <span class="number">42</span>;</span><br><span class="line">            <span class="comment">// ... 其他内存操作</span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">finally</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">// 关键：归还对象池数组，避免资源泄漏</span></span><br><span class="line">        <span class="keyword">if</span> (pooledArray != <span class="literal">null</span>)</span><br><span class="line">        &#123;</span><br><span class="line">            ArrayPool&lt;<span class="built_in">int</span>&gt;.Shared.Return(pooledArray);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="3-模式背后的-NET-性能哲学"><a href="#3-模式背后的-NET-性能哲学" class="headerlink" title="3. 模式背后的 .NET 性能哲学"></a>3. 模式背后的 .NET 性能哲学</h3><p>这种“按尺寸选择分配策略”的模式，是 .NET 底层设计的核心哲学，在 BCL（基础类库）中被广泛应用：</p>
+<table>
+<thead>
+<tr>
+<th>缓冲区尺寸</th>
+<th>分配策略</th>
+<th>核心优势</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>小（≤1KB）</td>
+<td>stackalloc 栈分配</td>
+<td>极致性能，无 GC 开销</td>
+</tr>
+<tr>
+<td>中（1KB~100KB）</td>
+<td>ArrayPool 复用</td>
+<td>避免重复堆分配，控制 GC</td>
+</tr>
+<tr>
+<td>大（&gt;100KB）</td>
+<td>显式堆分配（new）</td>
+<td>栈&#x2F;池不适合，直接堆分配更稳定</td>
+</tr>
+</tbody></table>
+<p>你可以在 ValueStringBuilder、Utf8Formatter、System.Text.Json 等高性能组件中，看到完全一致的设计思路。</p>
+<h2 id="五、总结与使用建议"><a href="#五、总结与使用建议" class="headerlink" title="五、总结与使用建议"></a>五、总结与使用建议</h2><h3 id="一句话总结-stackalloc"><a href="#一句话总结-stackalloc" class="headerlink" title="一句话总结 stackalloc"></a>一句话总结 stackalloc</h3><p>stackalloc 是 .NET 中<strong>用“严格生命周期限制”换取“极致性能”、用“确定性内存管理”换取“安全边界”的工具</strong>——适合特定场景，但绝非万能。</p>
+<h3 id="适用场景（✅-推荐）"><a href="#适用场景（✅-推荐）" class="headerlink" title="适用场景（✅ 推荐）"></a>适用场景（✅ 推荐）</h3><ul>
+<li>短生命周期的临时缓冲区（仅在当前方法内使用）；</li>
+<li>高频调用的性能敏感场景（如循环内的小尺寸内存操作）；</li>
+<li>与 Span&lt;T&gt; 配合，进行安全的内存读写、切片等操作。</li>
+</ul>
+<h3 id="不适用场景（❌-避免）"><a href="#不适用场景（❌-避免）" class="headerlink" title="不适用场景（❌ 避免）"></a>不适用场景（❌ 避免）</h3><ul>
+<li>大尺寸内存分配（超过 1KB 需谨慎评估栈空间）；</li>
+<li>长度不确定的内存需求（无法预判是否超出栈容量）；</li>
+<li>需要跨方法、跨异步场景传递的内存；</li>
+<li>普通业务代码随意使用（优先保证稳定性，而非极致性能）。</li>
+</ul>
+<p>stackalloc 不是“性能银弹”，但掌握其核心逻辑与组合模式后，能在关键场景中显著提升 .NET 应用的性能，同时规避潜在风险。</p>
+
+  </div>
+</article>
+
+
+    <div class="blog-post-comments">
+        <div id="utterances_thread">
+            <noscript>加载评论需要在浏览器启用 JavaScript 脚本支持。</noscript>
+        </div>
+    </div>
+
+
+        
+          <div id="footer-post-container">
+  <div id="footer-post">
+
+    <div id="nav-footer" style="display: none">
+      <ul>
+        
+          <li><a href="/">首页</a></li>
+        
+          <li><a href="/about/">关于</a></li>
+        
+          <li><a href="/archives/">归档</a></li>
+        
+          <li><a href="/search/">搜索</a></li>
+        
+          <li><a href="/tags/">标签</a></li>
+        
+          <li><a href="/categories/">分类</a></li>
+        
+          <li><a target="_blank" rel="noopener" href="https://github.com/as436845345/">项目</a></li>
+        
+      </ul>
+    </div>
+
+    
+    
+      <div id="toc-footer" style="display: none">
+        <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9C%80%E5%90%8E%E6%9B%B4%E6%96%B0%E6%97%B6%E9%97%B4%EF%BC%9A2026-02-20-19-54-51"><span class="toc-number">1.</span> <span class="toc-text">最后更新时间：2026-02-20 19:54:51</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80%E3%80%81stackalloc-%E6%A0%B8%E5%BF%83%E6%A6%82%E8%BF%B0"><span class="toc-number"></span> <span class="toc-text">一、stackalloc 核心概述</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-%E4%BB%80%E4%B9%88%E6%98%AF-stackalloc%EF%BC%9F"><span class="toc-number">1.</span> <span class="toc-text">1. 什么是 stackalloc？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-%E4%B8%A4%E7%A7%8D%E5%9F%BA%E6%9C%AC%E5%88%9B%E5%BB%BA%E6%96%B9%E5%BC%8F"><span class="toc-number">2.</span> <span class="toc-text">2. 两种基本创建方式</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#2-1-Span-stackalloc%EF%BC%88%E7%8E%B0%E4%BB%A3%E6%8E%A8%E8%8D%90%EF%BC%89"><span class="toc-number">2.1.</span> <span class="toc-text">2-1. Span + stackalloc（现代推荐）</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2-2-%E8%A3%B8%E6%8C%87%E9%92%88%E5%BD%A2%E5%BC%8F%EF%BC%88%E5%BA%95%E5%B1%82-%E4%B8%8D%E5%AE%89%E5%85%A8%E5%9C%BA%E6%99%AF%EF%BC%89"><span class="toc-number">2.2.</span> <span class="toc-text">2-2. 裸指针形式（底层&#x2F;不安全场景）</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%8C%E3%80%81stackalloc-%E7%9A%84%E6%A0%B8%E5%BF%83%E4%BC%98%E5%8A%BF"><span class="toc-number"></span> <span class="toc-text">二、stackalloc 的核心优势</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-%E5%BD%BB%E5%BA%95%E9%81%BF%E5%85%8D%E5%A0%86%E5%88%86%E9%85%8D%E5%BC%80%E9%94%80"><span class="toc-number">1.</span> <span class="toc-text">1. 彻底避免堆分配开销</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-%E4%B8%8E-Span-%E5%A4%A9%E7%84%B6%E5%A5%91%E5%90%88"><span class="toc-number">2.</span> <span class="toc-text">2. 与 Span 天然契合</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%89%E3%80%81stackalloc-%E7%9A%84%E9%99%90%E5%88%B6%E4%B8%8E%E6%BD%9C%E5%9C%A8%E9%A3%8E%E9%99%A9"><span class="toc-number"></span> <span class="toc-text">三、stackalloc 的限制与潜在风险</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-%E6%A0%88%E7%A9%BA%E9%97%B4%E6%9C%89%E9%99%90%EF%BC%8C%E8%B6%85%E5%A4%A7%E5%88%86%E9%85%8D%E6%98%93%E6%BA%A2%E5%87%BA"><span class="toc-number">1.</span> <span class="toc-text">1. 栈空间有限，超大分配易溢出</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-%E6%A0%88%E6%BA%A2%E5%87%BA%E6%98%AF%E4%B8%8D%E5%8F%AF%E6%81%A2%E5%A4%8D%E7%9A%84%E8%87%B4%E5%91%BD%E9%94%99%E8%AF%AF"><span class="toc-number">2.</span> <span class="toc-text">2. 栈溢出是不可恢复的致命错误</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F%E4%B8%A5%E6%A0%BC%E5%8F%97%E9%99%90%EF%BC%8C%E6%97%A0%E6%B3%95%E8%B7%A8%E5%9C%BA%E6%99%AF%E4%BC%A0%E9%80%92"><span class="toc-number">3.</span> <span class="toc-text">3. 生命周期严格受限，无法跨场景传递</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9B%9B%E3%80%81%E6%8E%A8%E8%8D%90%E6%A8%A1%E5%BC%8F%EF%BC%9Astackalloc-ArrayPool-%E7%BB%84%E5%90%88%E4%BD%BF%E7%94%A8"><span class="toc-number"></span> <span class="toc-text">四、推荐模式：stackalloc + ArrayPool 组合使用</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-%E7%BB%84%E5%90%88%E7%9A%84%E6%A0%B8%E5%BF%83%E9%80%BB%E8%BE%91"><span class="toc-number">1.</span> <span class="toc-text">1. 组合的核心逻辑</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-%E5%8F%AF%E7%9B%B4%E6%8E%A5%E5%A4%8D%E7%94%A8%E7%9A%84%E4%BB%A3%E7%A0%81%E5%AE%9E%E7%8E%B0"><span class="toc-number">2.</span> <span class="toc-text">2. 可直接复用的代码实现</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-%E6%A8%A1%E5%BC%8F%E8%83%8C%E5%90%8E%E7%9A%84-NET-%E6%80%A7%E8%83%BD%E5%93%B2%E5%AD%A6"><span class="toc-number">3.</span> <span class="toc-text">3. 模式背后的 .NET 性能哲学</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%94%E3%80%81%E6%80%BB%E7%BB%93%E4%B8%8E%E4%BD%BF%E7%94%A8%E5%BB%BA%E8%AE%AE"><span class="toc-number"></span> <span class="toc-text">五、总结与使用建议</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%80%E5%8F%A5%E8%AF%9D%E6%80%BB%E7%BB%93-stackalloc"><span class="toc-number">1.</span> <span class="toc-text">一句话总结 stackalloc</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%80%82%E7%94%A8%E5%9C%BA%E6%99%AF%EF%BC%88%E2%9C%85-%E6%8E%A8%E8%8D%90%EF%BC%89"><span class="toc-number">2.</span> <span class="toc-text">适用场景（✅ 推荐）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%8D%E9%80%82%E7%94%A8%E5%9C%BA%E6%99%AF%EF%BC%88%E2%9D%8C-%E9%81%BF%E5%85%8D%EF%BC%89"><span class="toc-number">3.</span> <span class="toc-text">不适用场景（❌ 避免）</span></a></li></ol>
+      </div>
+    
+
+    <div id="share-footer" style="display: none">
+      <ul>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.facebook.com/sharer.php?u=https://as436845345.github.io/2026/01/24/perfer-stackalloc-usage/"><i class="fab fa-facebook fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=https://as436845345.github.io/2026/01/24/perfer-stackalloc-usage/&text=尽量使用 stackalloc 表达式"><i class="fab fa-twitter fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=https://as436845345.github.io/2026/01/24/perfer-stackalloc-usage/&title=尽量使用 stackalloc 表达式"><i class="fab fa-linkedin fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=https://as436845345.github.io/2026/01/24/perfer-stackalloc-usage/&is_video=false&description=尽量使用 stackalloc 表达式"><i class="fab fa-pinterest fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=尽量使用 stackalloc 表达式&body=Check out this article: https://as436845345.github.io/2026/01/24/perfer-stackalloc-usage/"><i class="fa-solid fa-envelope fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=https://as436845345.github.io/2026/01/24/perfer-stackalloc-usage/&title=尽量使用 stackalloc 表达式"><i class="fab fa-get-pocket fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=https://as436845345.github.io/2026/01/24/perfer-stackalloc-usage/&title=尽量使用 stackalloc 表达式"><i class="fab fa-reddit fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=https://as436845345.github.io/2026/01/24/perfer-stackalloc-usage/&title=尽量使用 stackalloc 表达式"><i class="fab fa-stumbleupon fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=https://as436845345.github.io/2026/01/24/perfer-stackalloc-usage/&title=尽量使用 stackalloc 表达式"><i class="fab fa-digg fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=https://as436845345.github.io/2026/01/24/perfer-stackalloc-usage/&name=尽量使用 stackalloc 表达式&description="><i class="fab fa-tumblr fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=https://as436845345.github.io/2026/01/24/perfer-stackalloc-usage/&t=尽量使用 stackalloc 表达式"><i class="fab fa-hacker-news fa-lg" aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+
+    <div id="actions-footer">
+        <a id="menu" class="icon" href="#" onclick="$('#nav-footer').toggle();return false;"><i class="fa-solid fa-bars fa-lg" aria-hidden="true"></i> 菜单</a>
+        
+          <a id="toc" class="icon" href="#" onclick="$('#toc-footer').toggle();return false;"><i class="fa-solid fa-list fa-lg" aria-hidden="true"></i> 目录</a>
+        
+        <a id="share" class="icon" href="#" onclick="$('#share-footer').toggle();return false;"><i class="fa-solid fa-share-alt fa-lg" aria-hidden="true"></i> 分享</a>
+        <a id="top" style="display:none" class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fa-solid fa-chevron-up fa-lg" aria-hidden="true"></i> 返回顶部</a>
+    </div>
+
+  </div>
+</div>
+
+        
+        <footer id="footer">
+  <div class="footer-left">
+    Copyright &copy;
+    
+    
+    2016-2026
+    Ljhhhh
+  </div>
+  <div class="footer-right">
+    <nav>
+      <ul>
+        <!--
+       --><li><a href="/">首页</a></li><!--
+     --><!--
+       --><li><a href="/about/">关于</a></li><!--
+     --><!--
+       --><li><a href="/archives/">归档</a></li><!--
+     --><!--
+       --><li><a href="/search/">搜索</a></li><!--
+     --><!--
+       --><li><a href="/tags/">标签</a></li><!--
+     --><!--
+       --><li><a href="/categories/">分类</a></li><!--
+     --><!--
+       --><li><a target="_blank" rel="noopener" href="https://github.com/as436845345/">项目</a></li><!--
+     -->
+      </ul>
+    </nav>
+  </div>
+</footer>
+
+    </div>
+    <!-- styles -->
+
+
+
+  <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous" onload="this.onload=null;this.rel='stylesheet'"/>
+
+
+    <!-- jquery -->
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" crossorigin="anonymous"></script>
+
+
+
+
+<!-- clipboard -->
+
+  
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.7/clipboard.min.js" crossorigin="anonymous"></script>
+  
+  <script type="text/javascript">
+  $(function() {
+    // copy-btn HTML
+    var btn = "<span class=\"btn-copy tooltipped tooltipped-sw\" aria-label=\"复制到粘贴板！\">";
+    btn += '<i class="fa-regular fa-clone"></i>';
+    btn += '</span>';
+    // mount it!
+    $(".highlight table").before(btn);
+    var clip = new ClipboardJS('.btn-copy', {
+      text: function(trigger) {
+        return Array.from(trigger.nextElementSibling.querySelectorAll('.code')).reduce((str,it)=>str+it.innerText+'\n','')
+      }
+    });
+    clip.on('success', function(e) {
+      e.trigger.setAttribute('aria-label', "复制成功！");
+      e.clearSelection();
+    })
+  })
+  </script>
+
+
+<script src="/js/main.js"></script>
+
+<!-- search -->
+
+<!-- Baidu Analytics -->
+
+<!-- Cloudflare Analytics -->
+
+<!-- Disqus Comments -->
+
+<!-- utterances Comments -->
+
+    <script type="text/javascript">
+      var utterances_repo = 'as436845345/as436845345.github.io';
+      var utterances_issue_term = 'pathname';
+      var utterances_label = 'utterance';
+      var utterances_theme = 'github-light';
+
+      (function(){
+          var script = document.createElement('script');
+
+          script.src = 'https://utteranc.es/client.js';
+          script.setAttribute('repo', utterances_repo);
+          script.setAttribute('issue-term', 'pathname');
+          script.setAttribute('label', utterances_label);
+          script.setAttribute('theme', utterances_theme);
+          script.setAttribute('crossorigin', 'anonymous');
+          script.async = true;
+          (document.getElementById('utterances_thread')).appendChild(script);
+      }());
+  </script>
+
+</body>
+</html>
